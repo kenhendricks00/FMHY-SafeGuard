@@ -292,9 +292,9 @@
 <body>
   <div class="header">
     <div class="title">
-      <h1>FMHY SafeGuard</h1>
+      <h1 data-i18n="extensionName">FMHY SafeGuard</h1>
     </div>
-    <button class="settings-button" id="settingsButton" title="Open Settings">
+    <button class="settings-button" id="settingsButton" data-i18n-title="openSettings" title="Open Settings">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path
           d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.65.07-.97 0-.32-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65c-.04-.24-.25-.42-.5-.42h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 12c-.04.32-.07.65-.07.97 0 .32.03.65.07.97l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22-.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z" />
@@ -303,7 +303,7 @@
   </div>
   <div id="status-container">
     <img id="status-icon" class="status-image" src="safe.png" alt="Status Icon" />
-    <p id="status-message">Checking site status...</p>
+    <p id="status-message" data-i18n="checkingSiteStatus">Checking site status...</p>
   </div>
   <p id="error-message"></p>
   <div id="reason-container">
@@ -313,7 +313,7 @@
         <path d="M12 9v4"></path>
         <path d="M12 17h.01"></path>
       </svg>
-      Reason
+      <span data-i18n="reason">Reason</span>
     </div>
     <div id="reason-content"></div>
   </div>
@@ -325,23 +325,24 @@
         <line x1="16" y1="13" x2="8" y2="13" />
         <line x1="16" y1="17" x2="8" y2="17" />
       </svg>
-      FMHY Note
+      <span data-i18n="fmhyNote">FMHY Note</span>
     </div>
     <div id="note-content"></div>
   </div>
   <div id="feedback">
     <p>
-      Think this is a mistake?
-      <a href="https://github.com/fmhy/FMHY-SafeGuard/issues" target="_blank">Let us know</a>.
+      <span data-i18n="thinkMistake">Think this is a mistake?</span>
+      <a href="https://github.com/fmhy/FMHY-SafeGuard/issues" target="_blank" data-i18n="letUsKnow">Let us know</a>.
     </p>
   </div>
   <div id="footer">
     <p>
-      Powered by
-      <a href="https://github.com/fmhy/FMHYFilterlist" target="_blank">FMHY Filterlist</a>
+      <span data-i18n="poweredBy">Powered by</span>
+      <a href="https://github.com/fmhy/FMHYFilterlist" target="_blank" data-i18n="fmhyFilterlist">FMHY Filterlist</a>
     </p>
   </div>
 
+  <script src="../js/i18n.js"></script>
   <script src="index.js"></script>
 </body>
 

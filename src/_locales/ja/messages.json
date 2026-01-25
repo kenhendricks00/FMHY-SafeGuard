@@ -1,0 +1,270 @@
+{
+  "extensionName": {
+    "message": "FMHY SafeGuard",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "FMHYフィルターリストを使用したリアルタイムのウェブサイト安全性チェックでブラウジングを保護します。",
+    "description": "Description of the extension"
+  },
+  "checkingSiteStatus": {
+    "message": "サイトの状態を確認中...",
+    "description": "Loading message in popup"
+  },
+  "reason": {
+    "message": "理由",
+    "description": "Label for unsafe site reason"
+  },
+  "fmhyNote": {
+    "message": "FMHYノート",
+    "description": "Label for FMHY notes section"
+  },
+  "thinkMistake": {
+    "message": "間違いだと思いますか？",
+    "description": "Feedback prompt"
+  },
+  "letUsKnow": {
+    "message": "お知らせください",
+    "description": "Link text for reporting issues"
+  },
+  "poweredBy": {
+    "message": "提供：",
+    "description": "Footer text"
+  },
+  "fmhyFilterlist": {
+    "message": "FMHY Filterlist",
+    "description": "Filterlist name"
+  },
+  "statusUnsafe": {
+    "message": "$DOMAIN$ は<strong>危険</strong>としてフラグが立てられています。このサイトを避けることをお勧めします。",
+    "description": "Unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusPotentiallyUnsafe": {
+    "message": "$DOMAIN$ は<strong>潜在的に危険</strong>です。注意して進んでください。",
+    "description": "Potentially unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusFmhy": {
+    "message": "$DOMAIN$ は<strong>FMHY</strong>関連のサイトです。安心して進んでください。",
+    "description": "FMHY site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "fmhy.net"
+      }
+    }
+  },
+  "statusSafe": {
+    "message": "$DOMAIN$ は<strong>安全</strong>に閲覧できます。",
+    "description": "Safe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusStarred": {
+    "message": "$DOMAIN$ は<strong>お気に入り</strong>のサイトです。",
+    "description": "Starred site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusUnknown": {
+    "message": "$DOMAIN$ はデータベースにありません。",
+    "description": "Unknown site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusNoData": {
+    "message": "サイトの状態を確認できません。後でもう一度お試しください。",
+    "description": "No data available message"
+  },
+  "warningPageTitle": {
+    "message": "FMHY SafeGuard - 警告",
+    "description": "Warning page title"
+  },
+  "warningText": {
+    "message": "このサイトは<strong>危険</strong>としてフラグが立てられています。",
+    "description": "Warning page main text"
+  },
+  "warningRecommendation": {
+    "message": "このサイトを避けることをお勧めします。",
+    "description": "Warning page recommendation"
+  },
+  "goBack": {
+    "message": "戻る（推奨）",
+    "description": "Go back button text"
+  },
+  "proceedAnyway": {
+    "message": "それでも続行",
+    "description": "Proceed button text"
+  },
+  "settingsTitle": {
+    "message": "FMHY SafeGuard 設定",
+    "description": "Settings page title"
+  },
+  "filterlistStatistics": {
+    "message": "フィルターリスト統計",
+    "description": "Settings section title"
+  },
+  "lastUpdated": {
+    "message": "最終更新：",
+    "description": "Last updated label"
+  },
+  "unsafeSites": {
+    "message": "危険なサイト",
+    "description": "Stat label"
+  },
+  "potentiallyUnsafeSites": {
+    "message": "潜在的に危険なサイト",
+    "description": "Stat label"
+  },
+  "safeSites": {
+    "message": "安全なサイト",
+    "description": "Stat label"
+  },
+  "nextUpdateScheduled": {
+    "message": "次回更新予定：",
+    "description": "Update schedule label"
+  },
+  "theme": {
+    "message": "テーマ",
+    "description": "Theme setting title"
+  },
+  "themeDescription": {
+    "message": "お好みの外観モードを選択してください",
+    "description": "Theme setting description"
+  },
+  "systemDefault": {
+    "message": "システムデフォルト",
+    "description": "Theme option"
+  },
+  "darkMode": {
+    "message": "ダークモード",
+    "description": "Theme option"
+  },
+  "amoled": {
+    "message": "AMOLED",
+    "description": "Theme option"
+  },
+  "lightMode": {
+    "message": "ライトモード",
+    "description": "Theme option"
+  },
+  "warningPage": {
+    "message": "警告ページ",
+    "description": "Setting title"
+  },
+  "warningPageDescription": {
+    "message": "危険なサイトに警告ページを表示",
+    "description": "Setting description"
+  },
+  "linkHighlighting": {
+    "message": "リンクのハイライト",
+    "description": "Setting title"
+  },
+  "linkHighlightingDescription": {
+    "message": "ウェブページ上の安全なリンクと危険なリンクを視覚的にハイライト",
+    "description": "Setting description"
+  },
+  "highlightSafeLinks": {
+    "message": "安全なリンクをハイライト（緑）",
+    "description": "Setting option"
+  },
+  "highlightUnsafeLinks": {
+    "message": "危険なリンクをハイライト（赤）",
+    "description": "Setting option"
+  },
+  "showWarningBanners": {
+    "message": "危険なリンクの横に警告バナーを表示",
+    "description": "Setting option"
+  },
+  "safeLinkColor": {
+    "message": "安全なリンクの色",
+    "description": "Setting option"
+  },
+  "unsafeLinkColor": {
+    "message": "危険なリンクの色",
+    "description": "Setting option"
+  },
+  "autoUpdateFilterlist": {
+    "message": "フィルターリストの自動更新",
+    "description": "Setting title"
+  },
+  "autoUpdateDescription": {
+    "message": "セキュリティフィルターを自動的に更新",
+    "description": "Setting description"
+  },
+  "daily": {
+    "message": "毎日",
+    "description": "Update frequency option"
+  },
+  "weekly": {
+    "message": "毎週",
+    "description": "Update frequency option"
+  },
+  "monthly": {
+    "message": "毎月",
+    "description": "Update frequency option"
+  },
+  "domainManagement": {
+    "message": "ドメイン管理",
+    "description": "Setting title"
+  },
+  "domainManagementDescription": {
+    "message": "安全または危険なリストにドメインを手動で追加",
+    "description": "Setting description"
+  },
+  "safeDomains": {
+    "message": "安全なドメイン（1行に1つ）",
+    "description": "Textarea label"
+  },
+  "unsafeDomains": {
+    "message": "危険なドメイン（1行に1つ）",
+    "description": "Textarea label"
+  },
+  "saveSettings": {
+    "message": "設定を保存",
+    "description": "Save button text"
+  },
+  "settingsSaved": {
+    "message": "設定が正常に保存されました！",
+    "description": "Success notification"
+  },
+  "openSettings": {
+    "message": "設定を開く",
+    "description": "Settings button tooltip"
+  },
+  "language": {
+    "message": "言語",
+    "description": "Language setting title"
+  },
+  "languageDescription": {
+    "message": "お好みの言語を選択してください",
+    "description": "Language setting description"
+  },
+  "autoDetect": {
+    "message": "自動検出",
+    "description": "Auto-detect language option"
+  }
+}

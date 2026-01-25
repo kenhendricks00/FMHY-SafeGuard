@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Apply theme
   await applyTheme();
 
+  // Wait for i18n to be ready
+  if (window.i18n && window.i18n.ready) {
+    await window.i18n.ready;
+  }
+
   // Check site status immediately
   await checkSiteStatus();
 
@@ -283,21 +288,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       reasonContainer.classList.remove("visible");
     }
 
+    // Use i18n for status messages if available
+    const getMessage = window.i18n ? window.i18n.getMessage : (key, sub) => null;
+
     switch (status) {
       case "unsafe":
-        message = `${displayUrl} is flagged as <strong>unsafe</strong>. It's recommended to avoid this site.`;
+        message = getMessage("statusUnsafe", displayUrl) || `${displayUrl} is flagged as <strong>unsafe</strong>. It's recommended to avoid this site.`;
         break;
       case "potentially_unsafe":
-        message = `${displayUrl} is <strong>potentially unsafe</strong>. Proceed with caution.`;
+        message = getMessage("statusPotentiallyUnsafe", displayUrl) || `${displayUrl} is <strong>potentially unsafe</strong>. Proceed with caution.`;
         break;
       case "fmhy":
-        message = `${displayUrl} is an <strong>FMHY</strong> related site. Proceed confidently.`;
+        message = getMessage("statusFmhy", displayUrl) || `${displayUrl} is an <strong>FMHY</strong> related site. Proceed confidently.`;
         break;
       case "safe":
-        message = `${displayUrl} is <strong>safe</strong> to browse.`;
+        message = getMessage("statusSafe", displayUrl) || `${displayUrl} is <strong>safe</strong> to browse.`;
         break;
       case "starred":
-        message = `${displayUrl} is a <strong>starred</strong> site.`;
+        message = getMessage("statusStarred", displayUrl) || `${displayUrl} is a <strong>starred</strong> site.`;
         break;
       case "extension_page":
         if (displayUrl.startsWith(warningPageUrl)) {
@@ -314,10 +322,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         break;
       case "no_data":
-        message = `No data available for <strong>${displayUrl}</strong>.`;
+        message = getMessage("statusNoData") || `No data available for <strong>${displayUrl}</strong>.`;
         break;
       default:
-        message = `An unknown status was received for <strong>${displayUrl}</strong>.`;
+        message = getMessage("statusUnknown", displayUrl) || `${displayUrl} is not in our database.`;
     }
 
     updateUI(status, message);

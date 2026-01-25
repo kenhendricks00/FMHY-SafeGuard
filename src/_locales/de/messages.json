@@ -1,0 +1,270 @@
+{
+  "extensionName": {
+    "message": "FMHY SafeGuard",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "Schützen Sie Ihr Surfen mit Echtzeit-Sicherheitsprüfungen von Websites, unterstützt durch die FMHY-Filterliste.",
+    "description": "Description of the extension"
+  },
+  "checkingSiteStatus": {
+    "message": "Website-Status wird überprüft...",
+    "description": "Loading message in popup"
+  },
+  "reason": {
+    "message": "Grund",
+    "description": "Label for unsafe site reason"
+  },
+  "fmhyNote": {
+    "message": "FMHY-Hinweis",
+    "description": "Label for FMHY notes section"
+  },
+  "thinkMistake": {
+    "message": "Denken Sie, das ist ein Fehler?",
+    "description": "Feedback prompt"
+  },
+  "letUsKnow": {
+    "message": "Lassen Sie es uns wissen",
+    "description": "Link text for reporting issues"
+  },
+  "poweredBy": {
+    "message": "Unterstützt von",
+    "description": "Footer text"
+  },
+  "fmhyFilterlist": {
+    "message": "FMHY Filterlist",
+    "description": "Filterlist name"
+  },
+  "statusUnsafe": {
+    "message": "$DOMAIN$ ist als <strong>unsicher</strong> markiert. Es wird empfohlen, diese Seite zu meiden.",
+    "description": "Unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusPotentiallyUnsafe": {
+    "message": "$DOMAIN$ ist <strong>potenziell unsicher</strong>. Gehen Sie mit Vorsicht vor.",
+    "description": "Potentially unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusFmhy": {
+    "message": "$DOMAIN$ ist eine <strong>FMHY</strong>-bezogene Seite. Sie können vertrauen.",
+    "description": "FMHY site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "fmhy.net"
+      }
+    }
+  },
+  "statusSafe": {
+    "message": "$DOMAIN$ ist <strong>sicher</strong> zum Surfen.",
+    "description": "Safe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusStarred": {
+    "message": "$DOMAIN$ ist eine <strong>markierte</strong> Seite.",
+    "description": "Starred site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusUnknown": {
+    "message": "$DOMAIN$ ist nicht in unserer Datenbank.",
+    "description": "Unknown site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusNoData": {
+    "message": "Website-Status kann nicht überprüft werden. Bitte versuchen Sie es später erneut.",
+    "description": "No data available message"
+  },
+  "warningPageTitle": {
+    "message": "FMHY SafeGuard - Warnung",
+    "description": "Warning page title"
+  },
+  "warningText": {
+    "message": "Diese Seite wurde als <strong>unsicher</strong> markiert.",
+    "description": "Warning page main text"
+  },
+  "warningRecommendation": {
+    "message": "Es wird empfohlen, diese Seite zu meiden.",
+    "description": "Warning page recommendation"
+  },
+  "goBack": {
+    "message": "Zurück (Empfohlen)",
+    "description": "Go back button text"
+  },
+  "proceedAnyway": {
+    "message": "Trotzdem fortfahren",
+    "description": "Proceed button text"
+  },
+  "settingsTitle": {
+    "message": "FMHY SafeGuard Einstellungen",
+    "description": "Settings page title"
+  },
+  "filterlistStatistics": {
+    "message": "Filterlisten-Statistiken",
+    "description": "Settings section title"
+  },
+  "lastUpdated": {
+    "message": "Zuletzt aktualisiert:",
+    "description": "Last updated label"
+  },
+  "unsafeSites": {
+    "message": "Unsichere Seiten",
+    "description": "Stat label"
+  },
+  "potentiallyUnsafeSites": {
+    "message": "Potenziell unsichere Seiten",
+    "description": "Stat label"
+  },
+  "safeSites": {
+    "message": "Sichere Seiten",
+    "description": "Stat label"
+  },
+  "nextUpdateScheduled": {
+    "message": "Nächste Aktualisierung geplant für:",
+    "description": "Update schedule label"
+  },
+  "theme": {
+    "message": "Design",
+    "description": "Theme setting title"
+  },
+  "themeDescription": {
+    "message": "Wählen Sie Ihren bevorzugten Darstellungsmodus",
+    "description": "Theme setting description"
+  },
+  "systemDefault": {
+    "message": "Systemstandard",
+    "description": "Theme option"
+  },
+  "darkMode": {
+    "message": "Dunkler Modus",
+    "description": "Theme option"
+  },
+  "amoled": {
+    "message": "AMOLED",
+    "description": "Theme option"
+  },
+  "lightMode": {
+    "message": "Heller Modus",
+    "description": "Theme option"
+  },
+  "warningPage": {
+    "message": "Warnseite",
+    "description": "Setting title"
+  },
+  "warningPageDescription": {
+    "message": "Warnseite für unsichere Seiten anzeigen",
+    "description": "Setting description"
+  },
+  "linkHighlighting": {
+    "message": "Link-Hervorhebung",
+    "description": "Setting title"
+  },
+  "linkHighlightingDescription": {
+    "message": "Sichere und unsichere Links auf Webseiten visuell hervorheben",
+    "description": "Setting description"
+  },
+  "highlightSafeLinks": {
+    "message": "Sichere Links hervorheben (grün)",
+    "description": "Setting option"
+  },
+  "highlightUnsafeLinks": {
+    "message": "Unsichere Links hervorheben (rot)",
+    "description": "Setting option"
+  },
+  "showWarningBanners": {
+    "message": "Warnbanner neben unsicheren Links anzeigen",
+    "description": "Setting option"
+  },
+  "safeLinkColor": {
+    "message": "Farbe für sichere Links",
+    "description": "Setting option"
+  },
+  "unsafeLinkColor": {
+    "message": "Farbe für unsichere Links",
+    "description": "Setting option"
+  },
+  "autoUpdateFilterlist": {
+    "message": "Filterliste automatisch aktualisieren",
+    "description": "Setting title"
+  },
+  "autoUpdateDescription": {
+    "message": "Sicherheitsfilter automatisch aktualisieren",
+    "description": "Setting description"
+  },
+  "daily": {
+    "message": "Täglich",
+    "description": "Update frequency option"
+  },
+  "weekly": {
+    "message": "Wöchentlich",
+    "description": "Update frequency option"
+  },
+  "monthly": {
+    "message": "Monatlich",
+    "description": "Update frequency option"
+  },
+  "domainManagement": {
+    "message": "Domain-Verwaltung",
+    "description": "Setting title"
+  },
+  "domainManagementDescription": {
+    "message": "Domains manuell zu sicheren oder unsicheren Listen hinzufügen",
+    "description": "Setting description"
+  },
+  "safeDomains": {
+    "message": "Sichere Domains (eine pro Zeile)",
+    "description": "Textarea label"
+  },
+  "unsafeDomains": {
+    "message": "Unsichere Domains (eine pro Zeile)",
+    "description": "Textarea label"
+  },
+  "saveSettings": {
+    "message": "Einstellungen speichern",
+    "description": "Save button text"
+  },
+  "settingsSaved": {
+    "message": "Einstellungen erfolgreich gespeichert!",
+    "description": "Success notification"
+  },
+  "openSettings": {
+    "message": "Einstellungen öffnen",
+    "description": "Settings button tooltip"
+  },
+  "language": {
+    "message": "Sprache",
+    "description": "Language setting title"
+  },
+  "languageDescription": {
+    "message": "Wählen Sie Ihre bevorzugte Sprache",
+    "description": "Language setting description"
+  },
+  "autoDetect": {
+    "message": "Automatisch erkennen",
+    "description": "Auto-detect language option"
+  }
+}

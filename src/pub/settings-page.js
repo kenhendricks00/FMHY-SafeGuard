@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Get all DOM elements
   const themeSelect = document.getElementById("themeSelect");
+  const languageSelect = document.getElementById("languageSelect");
   const warningToggle = document.getElementById("warningToggle");
   const updateFrequency = document.getElementById("updateFrequency");
   const saveButton = document.getElementById("saveSettings");
@@ -216,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const settings = await browserAPI.storage.local.get([
         "theme",
+        "language",
         "showWarning",
         "updateFrequency",
         "lastUpdated",
@@ -233,6 +235,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       themeSelect.value = settings.theme || "system";
       applyTheme(settings.theme || "system");
+
+      // Set language
+      if (languageSelect) {
+        languageSelect.value = settings.language || "auto";
+      }
 
       warningToggle.checked = settings.showWarning !== false;
 
@@ -330,6 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const newSettings = {
         theme: themeSelect.value,
+        language: languageSelect ? languageSelect.value : "auto",
         showWarning: warningToggle.checked,
         updateFrequency: updateFrequency.value,
         highlightTrusted: highlightTrustedToggle.checked,
@@ -402,6 +410,20 @@ document.addEventListener("DOMContentLoaded", () => {
   if (themeSelect) {
     themeSelect.addEventListener("change", (e) => {
       applyTheme(e.target.value);
+    });
+  }
+
+  // Apply language change immediately when selected
+  if (languageSelect) {
+    languageSelect.addEventListener("change", async (e) => {
+      const newLang = e.target.value;
+      // Save to storage immediately
+      await browserAPI.storage.local.set({ language: newLang });
+      // Apply translations if i18n is available
+      if (window.i18n && window.i18n.setLanguage) {
+        await window.i18n.setLanguage(newLang === "auto" ? 
+          (browserAPI.i18n.getUILanguage().split("-")[0]) : newLang);
+      }
     });
   }
 

@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FMHY SafeGuard - Warning</title>
+  <title data-i18n="warningPageTitle">FMHY SafeGuard - Warning</title>
   <link rel="icon" type="image/x-icon" href="../res/ext_icon_144.png" />
+  <script src="../js/i18n.js"></script>
   <script src="warning-page.js"></script>
   <style>
     @font-face {
@@ -181,33 +182,33 @@
 
 <body>
   <div class="container">
-    <h1 class="title">FMHY SafeGuard</h1>
+    <h1 class="title" data-i18n="extensionName">FMHY SafeGuard</h1>
     <div class="warning-card">
       <img src="../res/icons/unsafe.png" alt="Warning" class="warning-icon" id="warningIcon" />
       <p class="url" id="unsafeUrl"></p>
       <p class="warning-text">
-        This site has been flagged as <strong>unsafe</strong>.<br />
-        It's recommended to avoid this site.
+        <span data-i18n-html="warningText">This site has been flagged as <strong>unsafe</strong>.</span><br />
+        <span data-i18n="warningRecommendation">It's recommended to avoid this site.</span>
       </p>
       <p class="reason-text" id="reasonContainer"
         style="display: none; color: #a0a0a0; font-size: 0.9em; margin-bottom: 1.5rem; padding: 0.75rem; background: rgba(255,68,68,0.1); border-radius: 8px; border-left: 3px solid var(--danger);">
         <strong>Reason:</strong> <span id="reasonText"></span>
       </p>
       <div class="buttons">
-        <button class="btn btn-secondary" id="goBack">
+        <button class="btn btn-secondary" id="goBack" data-i18n="goBack">
           Go Back (Recommended)
         </button>
-        <button class="btn btn-primary" id="proceed">Proceed Anyway</button>
+        <button class="btn btn-primary" id="proceed" data-i18n="proceedAnyway">Proceed Anyway</button>
       </div>
     </div>
     <div class="footer">
       <p>
-        Think this is a mistake?
-        <a href="https://github.com/fmhy/FMHY-SafeGuard/issues" target="_blank">Let us know</a>
+        <span data-i18n="thinkMistake">Think this is a mistake?</span>
+        <a href="https://github.com/fmhy/FMHY-SafeGuard/issues" target="_blank" data-i18n="letUsKnow">Let us know</a>
       </p>
       <p>
-        Powered by
-        <a href="https://github.com/fmhy/FMHYFilterlist" target="_blank">FMHY Filterlist</a>
+        <span data-i18n="poweredBy">Powered by</span>
+        <a href="https://github.com/fmhy/FMHYFilterlist" target="_blank" data-i18n="fmhyFilterlist">FMHY Filterlist</a>
       </p>
     </div>
   </div>
