@@ -34,6 +34,8 @@ const safeListURLs = [
 ];
 const fmhyFilterListURL =
   "https://raw.githubusercontent.com/fmhy/FMHY-SafeGuard/refs/heads/main/fmhy-filterlist.txt";
+const unsafeReasonsURL =
+  "https://raw.githubusercontent.com/fmhy/FMHYFilterlist/refs/heads/main/filterlists-reasons.json";
 const notesBaseURL =
   "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
 
@@ -43,6 +45,7 @@ let potentiallyUnsafeSitesRegex = null;
 let fmhySitesRegex = null;
 let safeSites = [];
 let starredSites = [];
+let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
 const notesCache = new Map(); // Cache for fetched notes
 
@@ -234,6 +237,39 @@ function getNoteSlugForDomain(hostname) {
   return null;
 }
 
+// Get reason for an unsafe domain
+async function getReasonForDomain(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  
+  // If in-memory unsafeReasons is empty, try loading from storage
+  if (!unsafeReasons || Object.keys(unsafeReasons).length === 0) {
+    try {
+      const stored = await browserAPI.storage.local.get("unsafeReasons");
+      if (stored.unsafeReasons && Object.keys(stored.unsafeReasons).length > 0) {
+        unsafeReasons = stored.unsafeReasons;
+        console.log(`getReasonForDomain: Loaded ${Object.keys(unsafeReasons).length} unsafe reasons from storage`);
+      } else {
+        // Storage is also empty, fetch from URL
+        console.log("getReasonForDomain: Storage empty, fetching from URL...");
+        const response = await fetch(unsafeReasonsURL);
+        if (response.ok) {
+          unsafeReasons = await response.json();
+          await browserAPI.storage.local.set({ unsafeReasons });
+          console.log(`getReasonForDomain: Fetched and stored ${Object.keys(unsafeReasons).length} unsafe reasons`);
+        }
+      }
+    } catch (e) {
+      console.error("Error loading unsafeReasons:", e);
+    }
+  }
+  
+  // Try exact match first
+  if (unsafeReasons && unsafeReasons[domain]) return unsafeReasons[domain];
+  // Try with www prefix
+  if (unsafeReasons && unsafeReasons["www." + domain]) return unsafeReasons["www." + domain];
+  return null;
+}
+
 // Fetch note content from GitHub
 async function fetchNoteContent(noteSlug) {
   // Check cache first
@@ -368,11 +404,12 @@ function isSearchEngine(url) {
 async function fetchFilterLists() {
   console.log("Fetching filter lists...");
   try {
-    const [unsafeResponse, potentiallyUnsafeResponse, fmhyResponse] =
+    const [unsafeResponse, potentiallyUnsafeResponse, fmhyResponse, reasonsResponse] =
       await Promise.all([
         fetch(filterListURLUnsafe),
         fetch(filterListURLPotentiallyUnsafe),
         fetch(fmhyFilterListURL),
+        fetch(unsafeReasonsURL),
       ]);
 
     let unsafeSites = [];
@@ -399,10 +436,25 @@ async function fetchFilterLists() {
       fmhySitesRegex = generateRegexFromList(fmhySites);
     }
 
+    // Fetch unsafe site reasons
+    if (reasonsResponse.ok) {
+      try {
+        unsafeReasons = await reasonsResponse.json();
+        console.log(`Loaded ${Object.keys(unsafeReasons).length} unsafe site reasons`);
+      } catch (e) {
+        console.error("Error parsing unsafe reasons JSON:", e);
+        unsafeReasons = {};
+      }
+    } else {
+      console.warn("Failed to fetch unsafe reasons, status:", reasonsResponse.status);
+      unsafeReasons = {};
+    }
+
     await browserAPI.storage.local.set({
       unsafeSites,
       potentiallyUnsafeSites,
       fmhySites,
+      unsafeReasons,
       unsafeFilterCount: unsafeSites.length,
       potentiallyUnsafeFilterCount: potentiallyUnsafeSites.length,
       fmhyFilterCount: fmhySites.length,
@@ -680,133 +732,151 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
       matchedUrl = rootUrl;
     }
 
-    sendResponse({ status, matchedUrl });
+    // Get reason if unsafe
+    let reason = null;
+    if (status === "unsafe" || status === "potentially_unsafe") {
+      try {
+        const urlObj = new URL(matchedUrl);
+        reason = getReasonForDomain(urlObj.hostname);
+      } catch (e) {
+        console.error("Error getting reason:", e);
+      }
+    }
+
+    sendResponse({ status, matchedUrl, reason });
     return true;
   }
 
   if (message.action === "getSiteStatus") {
-    try {
-      // Get the URL from the message
-      const url = message.url;
-      if (!url) {
-        sendResponse({ status: "no_data", matchedUrl: null });
-        return true;
-      }
+    (async () => {
+      try {
+        // Get the URL from the message
+        const url = message.url;
+        if (!url) {
+          sendResponse({ status: "no_data", matchedUrl: null });
+          return;
+        }
 
-      console.log(`getSiteStatus: checking status for ${url}`);
+        console.log(`getSiteStatus: checking status for ${url}`);
 
-      // Normalize the URL
-      const normalizedUrl = normalizeUrl(url);
-      if (!normalizedUrl) {
-        sendResponse({ status: "no_data", matchedUrl: null });
-        return true;
-      }
+        // Normalize the URL
+        const normalizedUrl = normalizeUrl(url);
+        if (!normalizedUrl) {
+          sendResponse({ status: "no_data", matchedUrl: null });
+          return;
+        }
 
-      // Extract domain for domain-level checking
-      const urlObj = new URL(normalizedUrl);
-      const domain = urlObj.hostname;
+        // Extract domain for domain-level checking
+        const urlObj = new URL(normalizedUrl);
+        const domain = urlObj.hostname;
 
-      // First check if it's an extension page
-      if (url.startsWith(browserAPI.runtime.getURL(""))) {
-        sendResponse({ status: "extension_page", matchedUrl: url });
-        return true;
-      }
+        // First check if it's an extension page
+        if (url.startsWith(browserAPI.runtime.getURL(""))) {
+          sendResponse({ status: "extension_page", matchedUrl: url });
+          return;
+        }
 
-      // Special handling for repository sites
-      const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
-        (domain) =>
-          urlObj.hostname === domain || urlObj.hostname.endsWith("." + domain)
-      );
+        // Special handling for repository sites
+        const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
+          (d) => urlObj.hostname === d || urlObj.hostname.endsWith("." + d)
+        );
 
-      // Variables to track status and matched URL
-      let status = "no_data";
-      let matchedUrl = null;
+        // Variables to track status and matched URL
+        let status = "no_data";
+        let matchedUrl = null;
 
-      // Check full URL first
-      if (unsafeSitesRegex?.test(normalizedUrl)) {
-        status = "unsafe";
-        matchedUrl = normalizedUrl;
-      } else if (potentiallyUnsafeSitesRegex?.test(normalizedUrl)) {
-        status = "potentially_unsafe";
-        matchedUrl = normalizedUrl;
-      } else if (fmhySitesRegex?.test(normalizedUrl)) {
-        status = "fmhy";
-        matchedUrl = normalizedUrl;
-      } else if (starredSites.includes(normalizedUrl)) {
-        status = "starred";
-        matchedUrl = normalizedUrl;
-      } else if (safeSites.includes(normalizedUrl)) {
-        status = "safe";
-        matchedUrl = normalizedUrl;
-      }
-
-      // If no match for full URL and it's a repository site, don't try domain matching
-      if (status === "no_data" && isRepoSite) {
-        console.log(`No match for repository URL: ${normalizedUrl}`);
-        sendResponse({ status: "no_data", matchedUrl: normalizedUrl });
-        return true;
-      }
-
-      // If no match for full URL and it's a regular site, try domain-level matching
-      if (status === "no_data" && !isRepoSite) {
-        console.log(`No match for full URL, trying domain: ${domain}`);
-
-        // Check domain against regex patterns
-        if (unsafeSitesRegex?.test(domain)) {
+        // Check full URL first
+        if (unsafeSitesRegex?.test(normalizedUrl)) {
           status = "unsafe";
-          matchedUrl = `https://${domain}`;
-        } else if (potentiallyUnsafeSitesRegex?.test(domain)) {
+          matchedUrl = normalizedUrl;
+        } else if (potentiallyUnsafeSitesRegex?.test(normalizedUrl)) {
           status = "potentially_unsafe";
-          matchedUrl = `https://${domain}`;
-        } else if (fmhySitesRegex?.test(domain)) {
+          matchedUrl = normalizedUrl;
+        } else if (fmhySitesRegex?.test(normalizedUrl)) {
           status = "fmhy";
-          matchedUrl = `https://${domain}`;
+          matchedUrl = normalizedUrl;
+        } else if (starredSites.includes(normalizedUrl)) {
+          status = "starred";
+          matchedUrl = normalizedUrl;
+        } else if (safeSites.includes(normalizedUrl)) {
+          status = "safe";
+          matchedUrl = normalizedUrl;
         }
 
-        // Check domain against starred and safe lists
-        if (status === "no_data") {
-          for (const starredUrl of starredSites) {
-            try {
-              const starredUrlObj = new URL(starredUrl);
-              if (starredUrlObj.hostname === domain) {
-                status = "starred";
-                matchedUrl = starredUrl;
-                break;
+        // If no match for full URL and it's a repository site, don't try domain matching
+        if (status === "no_data" && isRepoSite) {
+          console.log(`No match for repository URL: ${normalizedUrl}`);
+          sendResponse({ status: "no_data", matchedUrl: normalizedUrl });
+          return;
+        }
+
+        // If no match for full URL and it's a regular site, try domain-level matching
+        if (status === "no_data" && !isRepoSite) {
+          console.log(`No match for full URL, trying domain: ${domain}`);
+
+          // Check domain against regex patterns
+          if (unsafeSitesRegex?.test(domain)) {
+            status = "unsafe";
+            matchedUrl = `https://${domain}`;
+          } else if (potentiallyUnsafeSitesRegex?.test(domain)) {
+            status = "potentially_unsafe";
+            matchedUrl = `https://${domain}`;
+          } else if (fmhySitesRegex?.test(domain)) {
+            status = "fmhy";
+            matchedUrl = `https://${domain}`;
+          }
+
+          // Check domain against starred and safe lists
+          if (status === "no_data") {
+            for (const starredUrl of starredSites) {
+              try {
+                const starredUrlObj = new URL(starredUrl);
+                if (starredUrlObj.hostname === domain) {
+                  status = "starred";
+                  matchedUrl = starredUrl;
+                  break;
+                }
+              } catch (e) {
+                continue;
               }
-            } catch (e) {
-              continue;
+            }
+          }
+
+          if (status === "no_data") {
+            for (const safeUrl of safeSites) {
+              try {
+                const safeUrlObj = new URL(safeUrl);
+                if (safeUrlObj.hostname === domain) {
+                  status = "safe";
+                  matchedUrl = safeUrl;
+                  break;
+                }
+              } catch (e) {
+                continue;
+              }
             }
           }
         }
 
-        if (status === "no_data") {
-          for (const safeUrl of safeSites) {
-            try {
-              const safeUrlObj = new URL(safeUrl);
-              if (safeUrlObj.hostname === domain) {
-                status = "safe";
-                matchedUrl = safeUrl;
-                break;
-              }
-            } catch (e) {
-              continue;
-            }
-          }
+        // Get reason if unsafe
+        let reason = null;
+        if (status === "unsafe" || status === "potentially_unsafe") {
+          reason = await getReasonForDomain(domain);
         }
+
+        console.log(
+          `getSiteStatus result for ${url}: ${status}, matched: ${matchedUrl}`
+        );
+        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason });
+      } catch (error) {
+        console.error("Error in getSiteStatus handler:", error);
+        sendResponse({
+          status: "no_data",
+          matchedUrl: null,
+          error: error.message,
+        });
       }
-
-      console.log(
-        `getSiteStatus result for ${url}: ${status}, matched: ${matchedUrl}`
-      );
-      sendResponse({ status: status, matchedUrl: matchedUrl });
-    } catch (error) {
-      console.error("Error in getSiteStatus handler:", error);
-      sendResponse({
-        status: "no_data",
-        matchedUrl: null,
-        error: error.message,
-      });
-    }
+    })();
     return true; // Keep the message channel open for async response
   }
 
@@ -938,10 +1008,24 @@ async function openWarningPage(tabId, unsafeUrl) {
   tabApprovedUrls.push(normalizedUrl);
   approvedUrls.set(tabId, tabApprovedUrls);
 
+  // Get the reason for this unsafe site
+  let hostname;
+  try {
+    hostname = new URL(unsafeUrl).hostname;
+  } catch (e) {
+    hostname = unsafeUrl.replace(/^https?:\/\//, "").split("/")[0];
+  }
+  const reason = await getReasonForDomain(hostname);
+  console.log(`openWarningPage: hostname=${hostname}, reason=${reason ? "found" : "not found"}`);
+
   // Redirect to the warning page if it is enabled in settings
-  const warningPageUrl = browserAPI.runtime.getURL(
+  let warningPageUrl = browserAPI.runtime.getURL(
     `../pub/warning-page.html?url=${encodeURIComponent(unsafeUrl)}`
   );
+  if (reason) {
+    warningPageUrl += `&reason=${encodeURIComponent(reason)}`;
+  }
+  console.log(`openWarningPage: redirecting to ${warningPageUrl}`);
   browserAPI.tabs.update(tabId, { url: warningPageUrl });
 }
 
@@ -1034,6 +1118,7 @@ async function initializeExtension() {
           "fmhySites",
           "starredSites",
           "safeSiteList",
+          "unsafeReasons",
         ]);
 
         if (storedData.unsafeSites && storedData.unsafeSites.length > 0) {
@@ -1051,6 +1136,24 @@ async function initializeExtension() {
 
         if (storedData.fmhySites && storedData.fmhySites.length > 0) {
           fmhySitesRegex = generateRegexFromList(storedData.fmhySites);
+        }
+
+        if (storedData.unsafeReasons && Object.keys(storedData.unsafeReasons).length > 0) {
+          unsafeReasons = storedData.unsafeReasons;
+          console.log(`Loaded ${Object.keys(unsafeReasons).length} unsafe reasons from storage`);
+        } else {
+          // If no unsafe reasons in storage, fetch them now
+          console.log("No unsafeReasons in storage, fetching...");
+          try {
+            const reasonsResponse = await fetch(unsafeReasonsURL);
+            if (reasonsResponse.ok) {
+              unsafeReasons = await reasonsResponse.json();
+              await browserAPI.storage.local.set({ unsafeReasons });
+              console.log(`Fetched and stored ${Object.keys(unsafeReasons).length} unsafe reasons`);
+            }
+          } catch (e) {
+            console.error("Error fetching unsafeReasons:", e);
+          }
         }
 
         // Load starred sites from storage
@@ -1094,6 +1197,21 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "updateAlarm") {
     setupUpdateSchedule().then(() => {
       sendResponse({ status: "updated" });
+    });
+    return true;
+  }
+
+  if (message.action === "forceUpdate") {
+    console.log("Force update triggered manually");
+    Promise.all([
+      fetchFilterLists(),
+      fetchSafeSites(),
+      fetchStarredSites()
+    ]).then(() => {
+      sendResponse({ status: "updated" });
+    }).catch((error) => {
+      console.error("Force update failed:", error);
+      sendResponse({ status: "error", error: error.message });
     });
     return true;
   }

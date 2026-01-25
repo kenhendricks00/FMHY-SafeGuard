@@ -1,11 +1,67 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Cross-browser compatibility shim
   const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
   const urlParams = new URLSearchParams(window.location.search);
-  const unsafeUrl = urlParams.get("url") || "unknown site";
+  const unsafeUrl = decodeURIComponent(urlParams.get("url") || "unknown site");
+  const reasonFromUrl = urlParams.get("reason");
   document.getElementById("unsafeUrl").textContent = unsafeUrl;
   console.log(`Warning page loaded for URL: ${unsafeUrl}`);
+
+  // Display reason for unsafe site - prefer URL parameter, fallback to storage
+  let reason = reasonFromUrl ? decodeURIComponent(reasonFromUrl) : null;
+
+  // Helper function to convert URLs to clickable links
+  function formatReasonWithLinks(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+  }
+
+  if (reason) {
+    console.log("Reason provided via URL parameter");
+    document.getElementById("reasonText").innerHTML = formatReasonWithLinks(reason);
+    document.getElementById("reasonContainer").style.display = "block";
+  } else {
+    // Fallback: try to fetch from storage
+    try {
+      const { unsafeReasons } = await browserAPI.storage.local.get("unsafeReasons");
+      console.log("Loaded unsafeReasons:", unsafeReasons ? Object.keys(unsafeReasons).length + " entries" : "null");
+
+      if (unsafeReasons && Object.keys(unsafeReasons).length > 0) {
+        // Extract domain from the unsafe URL
+        let domain;
+        try {
+          const urlObj = new URL(unsafeUrl);
+          domain = urlObj.hostname.replace(/^www\./, "").toLowerCase();
+        } catch (e) {
+          // If URL parsing fails, try to extract domain directly
+          domain = unsafeUrl
+            .replace(/^https?:\/\//, "")
+            .replace(/^www\./, "")
+            .split("/")[0]
+            .toLowerCase();
+        }
+
+        console.log("Looking up reason for domain:", domain);
+
+        // Check for reason - try multiple variations
+        reason = unsafeReasons[domain] ||
+          unsafeReasons["www." + domain] ||
+          unsafeReasons[domain.replace(/\/$/, "")]; // Without trailing slash
+
+        console.log("Found reason:", reason ? "yes" : "no");
+
+        if (reason) {
+          document.getElementById("reasonText").innerHTML = formatReasonWithLinks(reason);
+          document.getElementById("reasonContainer").style.display = "block";
+        }
+      } else {
+        console.log("No unsafeReasons in storage - filter lists may need to be refreshed");
+      }
+    } catch (error) {
+      console.error("Error fetching reason:", error);
+    }
+  }
 
   // "Go Back" button functionality to return to the previous page
   document.getElementById("goBack").addEventListener("click", () => {

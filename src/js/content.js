@@ -46,6 +46,7 @@ let unsafeDomains = new Set();
 let safeDomains = new Set();
 let userTrusted = new Set();
 let userUntrusted = new Set();
+let unsafeReasons = {};
 
 // Search engines where highlighting should be applied
 const searchEngines = [
@@ -177,9 +178,10 @@ async function loadSettings() {
 // Load domain lists from extension storage
 async function loadDomainLists() {
   try {
-    const { unsafeSites, safeSiteList } = await browserAPI.storage.local.get([
+    const { unsafeSites, safeSiteList, unsafeReasons: storedReasons } = await browserAPI.storage.local.get([
       "unsafeSites",
       "safeSiteList",
+      "unsafeReasons",
     ]);
 
     if (unsafeSites && Array.isArray(unsafeSites)) {
@@ -192,6 +194,10 @@ async function loadDomainLists() {
       safeDomains = new Set(
         safeSiteList.map((site) => normalizeDomain(new URL(site).hostname))
       );
+    }
+
+    if (storedReasons) {
+      unsafeReasons = storedReasons;
     }
 
     // Apply user overrides
@@ -246,12 +252,12 @@ function setupObserver() {
   if (!isSupportedSite(currentDomain)) {
     return;
   }
-  
+
   // Special handling for Brave Search - continuously recheck and re-add badges/highlighting for all site types
   if (currentDomain.includes("brave")) {
     // Track domains we've processed to avoid repetitive work
     const braveProcessedDomains = new Set();
-    
+
     // Set up a more frequent interval specifically for Brave Search
     braveSearchBadgeInterval = setInterval(() => {
       // Process all links in Brave Search results
@@ -260,48 +266,50 @@ function setupObserver() {
           if (!link.href || link.href.startsWith('javascript:') || link.href.startsWith('#')) {
             return;
           }
-          
+
           const linkDomain = normalizeDomain(new URL(link.href).hostname);
-          
+
           // Skip internal Brave links
           if (linkDomain.includes('brave.com')) {
             return;
           }
-          
+
           // Always check all links, even if we've seen them before
           // This ensures styling is reapplied if Brave removes it
-          
+
           // CASE 1: Unsafe sites (user untrusted or in unsafe list)
-          if (userUntrusted.has(linkDomain) || 
-              (!userTrusted.has(linkDomain) && unsafeDomains.has(linkDomain))) {
-            
+          if (userUntrusted.has(linkDomain) ||
+            (!userTrusted.has(linkDomain) && unsafeDomains.has(linkDomain))) {
+
             // Mark as unsafe
             link.setAttribute('data-fmhy-unsafe', 'true');
-            
+
             // Apply highlighting with !important to ensure it's not overridden
             link.style.setProperty('text-shadow', `0 0 4px ${settings.untrustedColor}`, 'important');
             link.style.setProperty('font-weight', 'bold', 'important');
-            
+
             // Force style recalculation by toggling a property
             link.style.display = 'inline';
             link.style.display = '';
-            
+
             // Also apply a class for redundancy
             link.classList.add('fmhy-highlighted-unsafe');
-            
+
             // Add badge for unsafe sites
-            const resultContainer = link.closest('article') || 
-                                  link.closest('li') || 
-                                  link.closest('.snippet') || 
-                                  findParentByTag(link, 5, ['ARTICLE', 'LI', 'DIV']);
-            
+            const resultContainer = link.closest('article') ||
+              link.closest('li') ||
+              link.closest('.snippet') ||
+              findParentByTag(link, 5, ['ARTICLE', 'LI', 'DIV']);
+
             if (resultContainer) {
               const siteDiv = resultContainer.querySelector('div[class^="site svelte-"]');
-              
+
               if (siteDiv && !siteDiv.querySelector('.fmhy-unsafe-badge')) {
                 const badge = document.createElement('span');
                 badge.className = 'fmhy-unsafe-badge';
-                badge.innerHTML = '<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site';
+                const reason = getReasonForDomain(linkDomain);
+                const reasonText = reason ? `: ${reason}` : "";
+                badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
                 badge.dataset.domain = linkDomain;
                 siteDiv.appendChild(badge);
               }
@@ -311,36 +319,36 @@ function setupObserver() {
           else if (userTrusted.has(linkDomain) || safeDomains.has(linkDomain)) {
             // Mark as safe
             link.setAttribute('data-fmhy-safe', 'true');
-            
+
             // Only add highlighting if the setting is enabled
             if (settings.highlightTrusted) {
               link.style.setProperty('text-shadow', `0 0 4px ${settings.trustedColor}`, 'important');
               link.style.setProperty('font-weight', 'bold', 'important');
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       });
     }, 50); // Check more frequently to ensure styling persists
   }
 
   const observer = new MutationObserver((mutations) => {
     let needsReprocess = false;
-    
+
     for (const mutation of mutations) {
       // Check if existing badges were removed
       if (mutation.removedNodes && mutation.removedNodes.length) {
         for (const node of mutation.removedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.classList && 
-                (node.classList.contains('fmhy-badge-wrapper') || 
-                 node.textContent && node.textContent.includes('FMHY Unsafe Site'))) {
+            if (node.classList &&
+              (node.classList.contains('fmhy-badge-wrapper') ||
+                node.textContent && node.textContent.includes('FMHY Unsafe Site'))) {
               needsReprocess = true;
               break;
             }
           }
         }
       }
-      
+
       // Process added nodes
       if (mutation.addedNodes && mutation.addedNodes.length) {
         for (const node of mutation.addedNodes) {
@@ -349,7 +357,7 @@ function setupObserver() {
             if (node.tagName === "A" && node.href) {
               processLink(node, currentDomain);
             }
-            
+
             // Process any links inside the added node
             if (node.querySelectorAll) {
               node
@@ -360,7 +368,7 @@ function setupObserver() {
         }
       }
     }
-    
+
     // If badges were removed, reprocess the page
     if (needsReprocess) {
       // Use setTimeout to avoid too frequent reprocessing
@@ -375,8 +383,8 @@ function setupObserver() {
   });
 
   // Watch for both childList and attributes changes, and subtree modifications
-  observer.observe(document.body, { 
-    childList: true, 
+  observer.observe(document.body, {
+    childList: true,
     subtree: true,
     attributes: true,
     attributeFilter: ['href']
@@ -388,7 +396,7 @@ function processLink(link, currentDomain) {
   // Skip if already processed
   if (processedLinks.has(link)) return;
   processedLinks.add(link);
-  
+
   // Add a class to mark as processed for easier detection
   link.classList.add("fmhy-processed");
 
@@ -426,7 +434,8 @@ function processLink(link, currentDomain) {
       }
 
       if (settings.showWarningBanners && !processedDomains.has(linkDomain)) {
-        addWarningBanner(link);
+        const reason = getReasonForDomain(linkDomain);
+        addWarningBanner(link, reason);
         processedDomains.add(linkDomain);
       }
     }
@@ -454,19 +463,19 @@ function highlightLink(link, type) {
 }
 
 // Add a warning banner after an unsafe link
-function addWarningBanner(link) {
+function addWarningBanner(link, reason = null) {
   const currentDomain = normalizeDomain(window.location.hostname);
-  
+
   // Special handling for Brave Search - use original highlighting style
   if (currentDomain.includes("brave")) {
     try {
       // Mark the link with attribute for CSS styling
       link.setAttribute('data-fmhy-unsafe', 'true');
-      
+
       // Use the original highlighting approach with text shadow
       link.style.setProperty('text-shadow', `0 0 4px ${settings.untrustedColor}`, 'important');
       link.style.setProperty('font-weight', 'bold', 'important');
-      
+
       // Add CSS for the badge styling only
       if (!document.getElementById('fmhy-brave-style')) {
         const style = document.createElement('style');
@@ -492,10 +501,10 @@ function addWarningBanner(link) {
         `;
         document.head.appendChild(style);
       }
-      
+
       // Find the closest search result container
       let resultContainer = link.closest('article') || link.closest('li') || link.closest('.snippet');
-      
+
       if (!resultContainer) {
         // If no direct container, traverse up a few levels
         resultContainer = link;
@@ -508,26 +517,27 @@ function addWarningBanner(link) {
           }
         }
       }
-      
+
       // Look for the site div specifically (what the user requested)
       const siteDiv = resultContainer.querySelector('div[class^="site svelte-"]');
-      
+
       if (siteDiv) {
         // Check if we already added a badge to this site div
         if (!siteDiv.querySelector('.fmhy-unsafe-badge')) {
           const badge = document.createElement('span');
           badge.className = 'fmhy-unsafe-badge';
-          badge.innerHTML = '<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site';
+          const reasonText = reason ? `: ${reason}` : "";
+          badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
           siteDiv.appendChild(badge);
         }
       }
-      
+
       return; // Exit early
     } catch (e) {
       console.error("[FMHY SafeGuard] Error styling Brave Search link:", e);
     }
   }
-  
+
   // For all other search engines, create a badge element
   const badge = document.createElement("span");
   Object.assign(badge.style, {
@@ -538,37 +548,38 @@ function addWarningBanner(link) {
     borderRadius: "4px",
     fontSize: "12px",
     display: "inline-block",
-    transform: "rotate(180deg) scaleX(-1) !important", 
+    transform: "rotate(180deg) scaleX(-1) !important",
     WebkitTransform: "rotate(180deg) scaleX(-1) !important",
     msTransform: "rotate(180deg) scaleX(-1) !important",
     position: "relative",
     zIndex: "9999"
   });
-  
+
   // Add the warning icon and text
-  badge.innerHTML = '<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site';
-  
+  const reasonText = reason ? `: ${reason}` : "";
+  badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
+
   // Google-specific margin adjustment
   if (currentDomain.includes("google")) {
     badge.style.margin = "0 15px";
   }
-  
+
   // Different insertion strategy for Google vs other engines
   if (currentDomain.includes("google")) {
     // For Google, find a suitable container
     let container = link;
     let parent = link.parentElement;
-    
+
     // Look for a suitable container
     for (let i = 0; i < 3 && parent; i++) {
-      if (parent.tagName === "DIV" || parent.tagName === "LI" || 
-          parent.querySelector("cite") || parent.querySelector(".link")) {
+      if (parent.tagName === "DIV" || parent.tagName === "LI" ||
+        parent.querySelector("cite") || parent.querySelector(".link")) {
         container = parent;
         break;
       }
       parent = parent.parentElement;
     }
-    
+
     // Try to place after cite element if it exists
     const citeElement = container.querySelector("cite");
     if (citeElement) {
@@ -589,6 +600,15 @@ function addWarningBanner(link) {
 }
 
 // Helper functions
+function getReasonForDomain(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  // Try exact match first
+  if (unsafeReasons[domain]) return unsafeReasons[domain];
+  // Try with www prefix
+  if (unsafeReasons["www." + domain]) return unsafeReasons["www." + domain];
+  return null;
+}
+
 function normalizeDomain(hostname) {
   return hostname.replace(/^www\./, "").toLowerCase();
 }
@@ -646,13 +666,13 @@ function refreshPage() {
       processedDomains.clear();
       highlightCountTrusted.clear();
       highlightCountUntrusted.clear();
-      
+
       // Clear any existing Brave Search interval and restart the observer
       if (braveSearchBadgeInterval) {
         clearInterval(braveSearchBadgeInterval);
         braveSearchBadgeInterval = null;
       }
-      
+
       // Restart the processing
       processPage();
       setupObserver();

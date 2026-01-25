@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const statusIcon = document.getElementById("status-icon");
   const statusMessage = document.getElementById("status-message");
   const errorMessage = document.getElementById("error-message");
+  const reasonContainer = document.getElementById("reason-container");
+  const reasonContent = document.getElementById("reason-content");
   const noteContainer = document.getElementById("note-container");
   const noteContent = document.getElementById("note-content");
 
@@ -166,10 +168,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       // Get the status from the background script
-      const response = await browserAPI.runtime.sendMessage({
-        action: "getSiteStatus",
-        url: currentUrl,
-      });
+      let response;
+      try {
+        response = await browserAPI.runtime.sendMessage({
+          action: "getSiteStatus",
+          url: currentUrl,
+        });
+      } catch (msgError) {
+        console.warn("Message send failed, retrying...", msgError);
+        // Retry once after a short delay (background script may be initializing)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        response = await browserAPI.runtime.sendMessage({
+          action: "getSiteStatus",
+          url: currentUrl,
+        });
+      }
 
       console.log("Status response:", response);
       if (!response || !response.status) {
@@ -248,7 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       // Update the popup with the result
-      handleStatusUpdate(response.status, displayUrl);
+      handleStatusUpdate(response.status, displayUrl, response.reason);
     } catch (error) {
       console.error("Error checking site status:", error);
       errorMessage.textContent = `Error: ${error.message}`;
@@ -256,12 +269,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function handleStatusUpdate(status, displayUrl) {
+  function handleStatusUpdate(status, displayUrl, reason) {
     let message;
+
+    // Handle reason display in dedicated container
+    if (reason && (status === "unsafe" || status === "potentially_unsafe")) {
+      // Convert URLs to clickable links
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const formattedReason = reason.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+      reasonContent.innerHTML = formattedReason;
+      reasonContainer.classList.add("visible");
+    } else {
+      reasonContainer.classList.remove("visible");
+    }
 
     switch (status) {
       case "unsafe":
-        message = `${displayUrl} is flagged as <strong>unsafe</strong>. Its Recommended To Avoid this Site.`;
+        message = `${displayUrl} is flagged as <strong>unsafe</strong>. It's recommended to avoid this site.`;
         break;
       case "potentially_unsafe":
         message = `${displayUrl} is <strong>potentially unsafe</strong>. Proceed with caution.`;
