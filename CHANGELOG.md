@@ -3,9 +3,6 @@
 ## v1.3.2 (01/25/2026)
 
 #### **🔧 Enhancements**
-- **`Firefox Auto-Update Support`**  
-    - Added `update_url` to Firefox manifest for automatic extension updates.  
-    - Firefox users will now receive updates automatically without manual reinstallation.  
 - **`Clickable Links in FMHY Notes`**  
     - Raw URLs in FMHY Notes are now automatically converted to clickable links.  
 
