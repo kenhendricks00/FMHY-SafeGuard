@@ -52,6 +52,7 @@ const notesBaseURL =
 let unsafeSitesRegex = null;
 let potentiallyUnsafeSitesRegex = null;
 let fmhySitesRegex = null;
+let fmhyHostnamesRegex = null; // Domain-only regex for FMHY sites
 let safeSites = [];
 let starredSites = [];
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
@@ -395,6 +396,18 @@ function extractUrlsFromFilterList(text) {
     .filter((url) => url !== null);
 }
 
+// Extract hostnames from a list of URLs for domain-level matching
+function extractHostnamesFromUrls(urls) {
+  return urls.map((url) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch (e) {
+      return url; // Return as-is if not a valid URL
+    }
+  }).filter((hostname) => hostname !== null);
+}
+
 // Function to check if a URL is a search engine
 function isSearchEngine(url) {
   try {
@@ -443,6 +456,9 @@ async function fetchFilterLists() {
       const fmhyText = await fmhyResponse.text();
       fmhySites = extractUrlsFromFilterList(fmhyText);
       fmhySitesRegex = generateRegexFromList(fmhySites);
+      // Also generate hostname-only regex for domain-level matching
+      const fmhyHostnames = extractHostnamesFromUrls(fmhySites);
+      fmhyHostnamesRegex = generateRegexFromList(fmhyHostnames);
     }
 
     // Fetch unsafe site reasons
@@ -830,7 +846,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           } else if (potentiallyUnsafeSitesRegex?.test(domain)) {
             status = "potentially_unsafe";
             matchedUrl = `https://${domain}`;
-          } else if (fmhySitesRegex?.test(domain)) {
+          } else if (fmhyHostnamesRegex?.test(domain)) {
             status = "fmhy";
             matchedUrl = `https://${domain}`;
           }
@@ -965,7 +981,7 @@ function getStatusFromLists(url) {
     // Then check domain-level
     if (unsafeSitesRegex?.test(domain)) return "unsafe";
     if (potentiallyUnsafeSitesRegex?.test(domain)) return "potentially_unsafe";
-    if (fmhySitesRegex?.test(domain)) return "fmhy";
+    if (fmhyHostnamesRegex?.test(domain)) return "fmhy";
 
     // Try domain-level checks for starred and safe
     for (const starredUrl of starredSites) {
@@ -1145,6 +1161,9 @@ async function initializeExtension() {
 
         if (storedData.fmhySites && storedData.fmhySites.length > 0) {
           fmhySitesRegex = generateRegexFromList(storedData.fmhySites);
+          // Also generate hostname-only regex for domain-level matching
+          const fmhyHostnames = extractHostnamesFromUrls(storedData.fmhySites);
+          fmhyHostnamesRegex = generateRegexFromList(fmhyHostnames);
         }
 
         if (storedData.unsafeReasons && Object.keys(storedData.unsafeReasons).length > 0) {
