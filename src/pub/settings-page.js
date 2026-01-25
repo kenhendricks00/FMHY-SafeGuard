@@ -383,8 +383,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Event listeners
-  document.addEventListener("DOMContentLoaded", async () => {
+  // Initialize settings on page load
+  (async () => {
     // First load settings to ensure we have the correct values
     await loadSettings();
     // Then load filter stats
@@ -395,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Log current settings for debugging
     console.log("Current update frequency:", updateFrequency.value);
     await window.checkCurrentSettings();
-  });
+  })();
 
   saveButton.addEventListener("click", saveSettings);
 
