@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.3 (UNRELEASED)
+
+#### **🐞 Bug Fixes**
+- **`Fixed FMHY Site Detection`**  
+    - Sites in `fmhy-filterlist.txt` now correctly show as "FMHY" status instead of just "safe".  
+    - Added domain-level matching for FMHY sites using hostname extraction.  
+
+---
+
 ## v1.3.2 (01/25/2026)
 
 #### **🔧 Enhancements**
