@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "Détection automatique",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Bienvenue sur FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Configurons-vous pour naviguer en toute sécurité",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Épingler l'extension à la barre d'outils",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "Pour un accès rapide, épinglez FMHY SafeGuard à la barre d'outils de votre navigateur :",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Cliquez sur le menu des extensions (icône de pièce de puzzle) dans votre barre d'outils",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Trouvez \"FMHY SafeGuard\" dans la liste",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Cliquez sur l'icône d'épingle ou faites un clic droit et sélectionnez \"Épingler à la barre d'outils\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "Comment ça marche",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuard vérifie automatiquement les sites web dans notre base de données de sécurité :",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Bloque l'accès aux sites dangereux connus",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Affiche des avertissements pour les sites potentiellement dangereux",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Identifie les sites sûrs de confiance",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Affiche les notes du wiki FMHY pour les sites mappés",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Affiche les raisons pour lesquelles les sites sont signalés comme dangereux",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "La couleur de l'icône de l'extension indique le statut du site actuel :",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Personnalisez vos paramètres",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Configurez l'extension pour qu'elle fonctionne au mieux pour vous :",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Choisissez un thème clair, sombre ou AMOLED",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Sélectionnez votre langue préférée (7 disponibles)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Activer/désactiver les pages d'avertissement",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Définir la fréquence de mise à jour automatique",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Personnaliser les couleurs de mise en évidence des liens",
+    "description": "Welcome step 3 item 5"
   }
 }

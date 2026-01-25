@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "Auto-detect",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Welcome to FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Let's get you set up to browse safely",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Pin Extension to Toolbar",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "For quick access, pin FMHY SafeGuard to your browser toolbar:",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Click the extensions menu (puzzle piece icon) in your toolbar",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Find \"FMHY SafeGuard\" in the list",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Click the pin icon next to it or right-click it and select \"Pin to Toolbar\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "How It Works",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuard automatically checks websites against our security database:",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Blocks access to known unsafe sites",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Shows warnings for potentially unsafe sites",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Identifies trusted safe sites",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Shows FMHY wiki notes for mapped sites",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Displays reasons why sites are flagged unsafe",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "The extension icon color indicates the current site's status:",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Customize Your Settings",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Configure the extension to work best for you:",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Choose light, dark, or AMOLED theme",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Select your preferred language (7 available)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Enable/disable warning pages",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Set automatic update frequency",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Customize link highlighting colors",
+    "description": "Welcome step 3 item 5"
   }
 }

@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "自動検出",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "FMHY SafeGuardへようこそ",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "安全なブラウジングの設定をしましょう",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "拡張機能をツールバーに固定",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "素早くアクセスするために、FMHY SafeGuardをブラウザのツールバーに固定してください：",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "ツールバーの拡張機能メニュー（パズルピースのアイコン）をクリック",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "リストから「FMHY SafeGuard」を見つける",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "ピンアイコンをクリックするか、右クリックして「ツールバーに固定」を選択",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "仕組み",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuardはセキュリティデータベースに対してウェブサイトを自動的にチェックします：",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "既知の危険なサイトへのアクセスをブロック",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "潜在的に危険なサイトに警告を表示",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "信頼できる安全なサイトを識別",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "マップされたサイトのFMHYウィキノートを表示",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "サイトが危険とマークされた理由を表示",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "拡張機能アイコンの色は現在のサイトのステータスを示します：",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "設定をカスタマイズ",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "拡張機能を最適に動作するように設定してください：",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "ライト、ダーク、またはAMOLEDテーマを選択",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "お好みの言語を選択（7言語対応）",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "警告ページの有効/無効を切り替え",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "自動更新頻度を設定",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "リンクハイライトの色をカスタマイズ",
+    "description": "Welcome step 3 item 5"
   }
 }

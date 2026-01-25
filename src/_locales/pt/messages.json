@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "Detectar automaticamente",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Bem-vindo ao FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Vamos configurá-lo para navegar com segurança",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Fixar extensão na barra de ferramentas",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "Para acesso rápido, fixe o FMHY SafeGuard na barra de ferramentas do seu navegador:",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Clique no menu de extensões (ícone de peça de puzzle) na sua barra de ferramentas",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Encontre \"FMHY SafeGuard\" na lista",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Clique no ícone de pin ou clique com o botão direito e selecione \"Fixar na barra de ferramentas\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "Como funciona",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "O FMHY SafeGuard verifica automaticamente os sites contra nossa base de dados de segurança:",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Bloqueia acesso a sites inseguros conhecidos",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Mostra avisos para sites potencialmente inseguros",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Identifica sites seguros confiáveis",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Mostra notas da wiki FMHY para sites mapeados",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Exibe razões pelas quais os sites são marcados como inseguros",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "A cor do ícone da extensão indica o status do site atual:",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Personalize suas configurações",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Configure a extensão para funcionar melhor para você:",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Escolha tema claro, escuro ou AMOLED",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Selecione seu idioma preferido (7 disponíveis)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Ativar/desativar páginas de aviso",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Definir frequência de atualização automática",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Personalizar cores de destaque de links",
+    "description": "Welcome step 3 item 5"
   }
 }

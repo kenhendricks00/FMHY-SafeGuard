@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "Automatisch erkennen",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Willkommen bei FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Lassen Sie uns Sie für sicheres Surfen einrichten",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Erweiterung an Symbolleiste anheften",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "Für schnellen Zugriff heften Sie FMHY SafeGuard an Ihre Browser-Symbolleiste:",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Klicken Sie auf das Erweiterungsmenü (Puzzleteil-Symbol) in Ihrer Symbolleiste",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Finden Sie \"FMHY SafeGuard\" in der Liste",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Klicken Sie auf das Pin-Symbol oder rechtsklicken Sie und wählen Sie \"An Symbolleiste anheften\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "So funktioniert es",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuard überprüft Websites automatisch anhand unserer Sicherheitsdatenbank:",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Blockiert den Zugang zu bekannten unsicheren Seiten",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Zeigt Warnungen für potenziell unsichere Seiten",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Identifiziert vertrauenswürdige sichere Seiten",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Zeigt FMHY-Wiki-Notizen für zugeordnete Seiten",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Zeigt Gründe an, warum Seiten als unsicher markiert sind",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "Die Farbe des Erweiterungssymbols zeigt den Status der aktuellen Seite an:",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Einstellungen anpassen",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Konfigurieren Sie die Erweiterung nach Ihren Wünschen:",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Wählen Sie helles, dunkles oder AMOLED-Design",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Wählen Sie Ihre bevorzugte Sprache (7 verfügbar)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Warnseiten aktivieren/deaktivieren",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Automatische Aktualisierungshäufigkeit festlegen",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Link-Hervorhebungsfarben anpassen",
+    "description": "Welcome step 3 item 5"
   }
 }

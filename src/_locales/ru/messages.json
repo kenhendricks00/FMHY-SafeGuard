@@ -266,5 +266,93 @@
   "autoDetect": {
     "message": "Автоопределение",
     "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Добро пожаловать в FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Давайте настроим безопасный просмотр",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Закрепите расширение на панели инструментов",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "Для быстрого доступа закрепите FMHY SafeGuard на панели инструментов браузера:",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Нажмите на меню расширений (значок пазла) на панели инструментов",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Найдите \"FMHY SafeGuard\" в списке",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Нажмите на значок булавки или щёлкните правой кнопкой и выберите \"Закрепить на панели\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "Как это работает",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuard автоматически проверяет сайты по нашей базе данных безопасности:",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Блокирует доступ к известным опасным сайтам",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Показывает предупреждения для потенциально опасных сайтов",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Определяет надёжные безопасные сайты",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Показывает заметки из вики FMHY для сопоставленных сайтов",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Отображает причины, почему сайты помечены как опасные",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "Цвет значка расширения указывает на статус текущего сайта:",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Настройте параметры",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Настройте расширение под себя:",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Выберите светлую, тёмную или AMOLED тему",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Выберите предпочитаемый язык (доступно 7)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Включите/отключите страницы предупреждений",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Установите частоту автоматического обновления",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Настройте цвета подсветки ссылок",
+    "description": "Welcome step 3 item 5"
   }
 }

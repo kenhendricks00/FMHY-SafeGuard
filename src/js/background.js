@@ -1,6 +1,15 @@
 // Cross-browser compatibility shim
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
+// Open welcome page on first install
+browserAPI.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    browserAPI.tabs.create({
+      url: browserAPI.runtime.getURL("pub/welcome-page.html")
+    });
+  }
+});
+
 // URLs and Constants
 const filterListURLUnsafe =
   "https://raw.githubusercontent.com/fmhy/FMHYFilterlist/refs/heads/main/sitelist.txt";
