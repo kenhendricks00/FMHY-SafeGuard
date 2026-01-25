@@ -87,8 +87,7 @@
     },
     "browser_specific_settings": {
         "gecko": {
-            "id": "{5d554479-7cc4-487f-bd25-d8fc67a42602}",
-            "update_url": "https://raw.githubusercontent.com/fmhy/FMHY-SafeGuard/main/updates.json"
+            "id": "{5d554479-7cc4-487f-bd25-d8fc67a42602}"
         }
     },
     "description": "__MSG_extensionDescription__"
