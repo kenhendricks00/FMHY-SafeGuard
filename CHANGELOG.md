@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.7 (UNRELEASED)
+## v1.3.0 (UNRELEASED)
 
 #### **🚀 New Features**
 - **`FMHY Notes Display`**  
@@ -18,6 +18,11 @@
 - **`Unsafe Site Reasons`**  
     - Warning page and popup now display the reason why a site is flagged as unsafe.  
     - Reasons are fetched from the FMHY Filterlist repository and include clickable evidence links.  
+- **`Multi-Language Support (i18n)`**  
+    - Added internationalization support for 7 languages: English, Spanish, Russian, German, Portuguese, French, and Japanese.  
+    - All UI elements in popup, warning page, and settings page are now translatable.  
+    - Extension automatically uses the browser's language preference.  
+    - Manual language selector added to settings page for user override.  
 
 #### **🔧 Enhancements**
 - **`Improved Message Handling`**  
@@ -27,6 +32,12 @@
 - **`Reason Display Styling`**  
     - Popup shows reasons in a dedicated container with alert-triangle icon matching the notes feature.  
     - Warning page displays reasons in a styled box with clickable links.  
+- **`Updated Documentation Website`**  
+    - Added Dark Reader support to prevent forced dark mode on docs site.  
+    - Replaced emoji icons with Lucide SVG icons for consistent, professional look.  
+    - Added new feature cards for Unsafe Site Reasons and FMHY Notes.  
+    - Improved mobile responsiveness with hamburger menu navigation.  
+    - Fixed blurry rendering on mobile devices.  
 
 #### **🐞 Bug Fixes**
 - **`Fixed Async Response Handling`**  
