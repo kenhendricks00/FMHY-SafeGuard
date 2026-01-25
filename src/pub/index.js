@@ -29,14 +29,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function applyTheme() {
     try {
-      const { theme } = await browserAPI.storage.sync.get("theme");
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      document.body.setAttribute(
-        "data-theme",
-        theme || (prefersDark ? "dark" : "light")
-      );
+      const { theme } = await browserAPI.storage.local.get("theme");
+      if (theme && theme !== "system") {
+        // Apply specific theme (dark, light, or amoled)
+        document.body.setAttribute("data-theme", theme);
+      } else {
+        // System default - detect preference
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
+      }
     } catch (error) {
       console.error("Error applying theme:", error);
     }
