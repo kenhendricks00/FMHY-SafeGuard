@@ -23,6 +23,12 @@
     - All UI elements in popup, warning page, and settings page are now translatable.  
     - Extension automatically uses the browser's language preference.  
     - Manual language selector added to settings page for user override.  
+- **`Welcome Page`**  
+    - New welcome page opens automatically on first install.  
+    - Guides users through pinning the extension, how it works, and customizing settings.  
+    - Fully translated in all 7 supported languages.  
+- **`Manual Filterlist Update`**  
+    - Added "Update Now" button in settings to manually trigger filterlist updates.  
 
 #### **🔧 Enhancements**
 - **`Improved Message Handling`**  
@@ -44,6 +50,9 @@
     - Resolved issue where async message listeners returned `Promise<false>` instead of keeping the channel open.  
 - **`Fixed Markdown Formatting`**  
     - Popup markdown parser now properly removes duplicate headers and handles paragraphs correctly.  
+- **`Fixed Update Frequency Setting`**  
+    - Resolved issue where changing update frequency (Daily/Weekly/Monthly) wasn't being applied correctly.  
+    - Background script now reads from the correct storage location.  
 - **`Fixed Reason Not Displaying`**  
     - Resolved issue where unsafe site reasons were not being passed to the warning page.  
     - Added fallback to fetch reasons from URL if storage is empty.  
