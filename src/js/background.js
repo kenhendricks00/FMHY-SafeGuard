@@ -34,6 +34,8 @@ const safeListURLs = [
 ];
 const fmhyFilterListURL =
   "https://raw.githubusercontent.com/fmhy/FMHY-SafeGuard/refs/heads/main/fmhy-filterlist.txt";
+const notesBaseURL =
+  "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
 
 // State Variables
 let unsafeSitesRegex = null;
@@ -42,6 +44,7 @@ let fmhySitesRegex = null;
 let safeSites = [];
 let starredSites = [];
 const approvedUrls = new Map(); // Map to store approved URLs per tab
+const notesCache = new Map(); // Cache for fetched notes
 
 // List of search engines to check against
 const searchEngines = [
@@ -73,7 +76,185 @@ const searchEngines = [
   "seznam.cz",
 ];
 
-// Helper Functions
+// Notes Mapping - Maps domains to their corresponding FMHY note slugs
+const notesMapping = {
+  // Torrent sites
+  "1337x.to": "1337x-ranks", "1337x.st": "1337x-ranks", "1337x.is": "1337x-ranks",
+  "1337x.gd": "1337x-ranks", "1337x.so": "1337x-ranks", "1337x.tw": "1337x-ranks",
+  // Audiobookbay
+  "audiobookbay.is": "audiobookbay-warning", "audiobookbay.se": "audiobookbay-warning",
+  "audiobookbay.fi": "audiobookbay-warning", "audiobookbay.nl": "audiobookbay-warning",
+  // Aurora Store
+  "auroraoss.com": "aurora-note",
+  // APKMirror
+  "apkmirror.com": "apkmirror-extensions",
+  // BuzzHeavier
+  "buzzheavier.com": "buzzheavier-warning",
+  // ChatGPT
+  "chat.openai.com": "chatgpt-limits", "chatgpt.com": "chatgpt-limits",
+  // Crystal Disk Info
+  "crystalmark.info": "crystaldiskinfo",
+  // CS.RIN.RU
+  "cs.rin.ru": "csrin-search",
+  // DODI Repacks
+  "dodi-repacks.site": "dodi-warning",
+  // FileBin
+  "filebin.net": "filebin-warning",
+  // FileLu
+  "filelu.com": "filelu-warning",
+  // FileZilla
+  "filezilla-project.org": "filezilla",
+  // Fluxy Repacks
+  "fluxyrepacks.site": "fluxy-repacks",
+  // Foxit Reader
+  "foxit.com": "foxit-warning",
+  // FreeGOGPCGames
+  "freegogpcgames.com": "freegogpcgames-note",
+  // Glitchwave
+  "glitchwave.com": "glitchwave-note",
+  // Google Translate
+  "translate.google.com": "google-translate-note",
+  // HDO Box
+  "hdo.app": "hdo-box-note",
+  // Hugging Face
+  "huggingface.co": "hugging-face-warning",
+  // InstaEclipse
+  "instaeclipse.com": "instaeclipse-note",
+  // IRC Highway
+  "irchighway.net": "irc-highway-note",
+  // JDownloader
+  "jdownloader.org": "jdownloader",
+  // LiteAPK / ModYolo
+  "liteapks.com": "liteapk-modyolo-note", "modyolo.com": "liteapk-modyolo-note",
+  // Mobilism
+  "mobilism.me": "mobilism-ranks", "mobilism.org": "mobilism-ranks",
+  // ModelScope
+  "modelscope.cn": "modelscope",
+  // Mori
+  "mori.space": "mori-note",
+  // movie-web / pstream
+  "movie-web.app": "movie-web", "pstream.org": "movie-web", "pstream.mov": "movie-web",
+  // MovieParadise
+  "movieparadise.org": "movieparadise-code",
+  // MVSEP
+  "mvsep.com": "mvsep-note",
+  // OpenAsar
+  "openasar.dev": "openasar",
+  // OpenRGB
+  "openrgb.org": "openrgb-beta",
+  // Pollinations AI
+  "pollinations.ai": "pollinations-limits",
+  // Proton VPN
+  "protonvpn.com": "proton-torrenting",
+  // REAPER DAW
+  "reaper.fm": "reaper-note",
+  // SaNET / SoftArchive
+  "sanet.st": "sanet-warning", "sanet.lc": "sanet-warning", "sanet.cd": "sanet-warning",
+  "softarchive.is": "softarchive-mirrors",
+  // Soft98
+  "soft98.ir": "soft98-note",
+  // Sora
+  "soraapp.tv": "sora",
+  // Spicetify
+  "spicetify.app": "spicetify-note",
+  // Sport7
+  "sport7.live": "sport7",
+  // Steam
+  "store.steampowered.com": "steam-controller-support",
+  // Tautulli
+  "tautulli.com": "tautulli-note",
+  // TeamSpeak
+  "teamspeak.com": "teamspeak-warning",
+  // Thunderbird
+  "thunderbird.net": "thunderbird",
+  // TinyURL
+  "tinyurl.com": "tinyurl-note",
+  // Video DownloadHelper
+  "downloadhelper.net": "video-downloadhelper",
+  // VuenXX
+  "vuenxx.com": "vuenxx-note",
+  // WeLib
+  "welib.org": "welib-note",
+  // WinRAR
+  "rarlab.com": "winrar", "win-rar.com": "winrar",
+  // YTS / Yify
+  "yts.mx": "yts-yify-note", "yts.rs": "yts-yify-note", "yts.lt": "yts-yify-note",
+  "yts.am": "yts-yify-note", "yts.ag": "yts-yify-note", "yts.pm": "yts-yify-note",
+  // 4PDA
+  "4pda.to": "captcha-4pda",
+  // Eruda
+  "eruda.liriliri.io": "eruda",
+  // Twitch alternate player
+  "twitch.tv": "alt-twitch-player-extensions",
+  // WARP alternatives
+  "1.1.1.1": "alt-warp-clients",
+  // Eaglercraft
+  "eaglercraft.com": "eaglercraft-note", "eagler.xyz": "eaglercraft-note",
+  // Bookmarkeddit
+  "bookmarkeddit.com": "bookmarkeddit",
+  // RGShows
+  "rgshows.to": "rgshows-autoplay", "rgshows.me": "rgshows-autoplay",
+  // OneClick
+  "oneclick.download": "oneclick-note",
+  // Forest
+  "forestapp.cc": "forest-extensions",
+  // Flicker proxy
+  "flicker.city": "flicker-proxy",
+  // Dolby
+  "dolby.com": "dolby-access-atmos-note",
+  // Bypass Freedlink
+  "freedlink.org": "bypass-freedlink", "freedl.ink": "bypass-freedlink",
+  // Limit bypass
+  "12ft.io": "limit-bypass-note", "archive.is": "limit-bypass-note",
+  // Malware removal forums
+  "malwaretips.com": "malware-removal-forums", "bleepingcomputer.com": "malware-removal-forums",
+  // Advanced calculators
+  "desmos.com": "advanced-logic-calculators", "wolframalpha.com": "advanced-logic-calculators",
+  "symbolab.com": "advanced-logic-calculators",
+};
+
+// Pattern-based matching for dynamic domains
+const notesPatterns = [
+  { pattern: /^1337x\./i, noteSlug: "1337x-ranks" },
+  { pattern: /^yts\./i, noteSlug: "yts-yify-note" },
+  { pattern: /^audiobookbay\./i, noteSlug: "audiobookbay-warning" },
+  { pattern: /^sanet\./i, noteSlug: "sanet-warning" },
+  { pattern: /^softarchive\./i, noteSlug: "softarchive-mirrors" },
+  { pattern: /^mobilism\./i, noteSlug: "mobilism-ranks" },
+  { pattern: /^rgshows\./i, noteSlug: "rgshows-autoplay" },
+];
+
+// Get note slug for a domain
+function getNoteSlugForDomain(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  if (notesMapping[domain]) return notesMapping[domain];
+  for (const { pattern, noteSlug } of notesPatterns) {
+    if (pattern.test(domain)) return noteSlug;
+  }
+  return null;
+}
+
+// Fetch note content from GitHub
+async function fetchNoteContent(noteSlug) {
+  // Check cache first
+  if (notesCache.has(noteSlug)) {
+    return notesCache.get(noteSlug);
+  }
+
+  try {
+    const response = await fetch(`${notesBaseURL}${noteSlug}.md`);
+    if (!response.ok) {
+      console.log(`Note not found: ${noteSlug}`);
+      return null;
+    }
+    const content = await response.text();
+    notesCache.set(noteSlug, content);
+    return content;
+  } catch (error) {
+    console.error(`Error fetching note ${noteSlug}:`, error);
+    return null;
+  }
+}
 function extractUrlsFromMarkdown(markdown) {
   const urlRegex = /https?:\/\/[^\s)]+/g;
   return markdown.match(urlRegex) || [];
@@ -628,6 +809,44 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true; // Keep the message channel open for async response
   }
+
+  // Handle note requests for websites
+  if (message.action === "getNoteForSite") {
+    const url = message.url;
+    if (!url) {
+      sendResponse({ note: null });
+      return true;
+    }
+
+    try {
+      const urlObj = new URL(url);
+      const noteSlug = getNoteSlugForDomain(urlObj.hostname);
+      console.log(`getNoteForSite: domain=${urlObj.hostname}, slug=${noteSlug}`);
+
+      if (!noteSlug) {
+        sendResponse({ note: null });
+        return true;
+      }
+
+      // Fetch note content asynchronously
+      fetchNoteContent(noteSlug).then(noteContent => {
+        console.log(`getNoteForSite: fetched content for ${noteSlug}, length=${noteContent?.length || 0}`);
+        sendResponse({ note: noteContent, slug: noteSlug });
+      }).catch(error => {
+        console.error("Error fetching note content:", error);
+        sendResponse({ note: null, error: error.message });
+      });
+
+      return true; // Keep channel open for async response
+    } catch (error) {
+      console.error("Error in getNoteForSite handler:", error);
+      sendResponse({ note: null, error: error.message });
+      return true;
+    }
+  }
+
+  // Return false for unhandled message types
+  return false;
 });
 
 function getStatusFromLists(url) {
@@ -733,6 +952,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status: "Settings updated successfully" });
     return true; // Indicates asynchronous response handling
   }
+  // Don't return anything for messages we don't handle - let other listeners process them
 });
 
 // Listen for tab updates
@@ -870,35 +1090,33 @@ async function initializeExtension() {
 }
 
 // Extension message handling
-browserAPI.runtime.onMessage.addListener(
-  async (message, sender, sendResponse) => {
-    if (message.action === "updateAlarm") {
-      await setupUpdateSchedule();
-      return true;
-    }
+browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateAlarm") {
+    setupUpdateSchedule().then(() => {
+      sendResponse({ status: "updated" });
+    });
+    return true;
+  }
 
-    if (message.action === "refreshAllTabs") {
-      // Get all tabs
-      const tabs = await browserAPI.tabs.query({});
-
-      // Send refresh message to all tabs
+  if (message.action === "refreshAllTabs") {
+    // Get all tabs and refresh
+    browserAPI.tabs.query({}).then(async (tabs) => {
       for (const tab of tabs) {
         try {
           await browserAPI.tabs.sendMessage(tab.id, {
             action: "refreshSettings",
           });
         } catch (error) {
-          // Content script might not be loaded in some tabs, ignore errors
           console.log(`Could not refresh tab ${tab.id}: ${error.message}`);
         }
       }
-
-      return true;
-    }
-
-    return false;
+      sendResponse({ status: "refreshed" });
+    });
+    return true;
   }
-);
+
+  // Don't return anything for unhandled messages
+});
 
 // Add listener for approval from the warning page
 browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {

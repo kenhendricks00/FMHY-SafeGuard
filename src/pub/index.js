@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const statusIcon = document.getElementById("status-icon");
   const statusMessage = document.getElementById("status-message");
   const errorMessage = document.getElementById("error-message");
+  const noteContainer = document.getElementById("note-container");
+  const noteContent = document.getElementById("note-content");
 
   const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
@@ -16,6 +18,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Check site status immediately
   await checkSiteStatus();
+
+  // Check for notes for this site
+  await fetchNoteForSite();
 
   // Add settings button listener
   document.getElementById("settingsButton").addEventListener("click", () => {
@@ -34,6 +39,98 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     } catch (error) {
       console.error("Error applying theme:", error);
+    }
+  }
+
+  // Simple markdown to HTML converter
+  function parseMarkdown(md) {
+    if (!md) return "";
+
+    let result = md
+      // Remove the main header (#### Title) since we show "FMHY Note" already
+      .replace(/^#{1,4}\s+.*$/gm, '')
+      // Trim leading/trailing whitespace
+      .trim()
+      // Bold (must come before italic)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Links
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Code
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      // List items - convert to proper list
+      .replace(/^[\*\-]\s+(.*)$/gm, '<li>$1</li>');
+
+    // Wrap consecutive li tags in ul
+    result = result.replace(/(<li>.*?<\/li>\s*)+/gs, '<ul>$&</ul>');
+
+    // Convert double newlines to paragraph breaks
+    result = result.replace(/\n\n+/g, '</p><p>');
+
+    // Convert single newlines to line breaks
+    result = result.replace(/\n/g, '<br>');
+
+    // Wrap in paragraph if content exists
+    if (result.trim()) {
+      result = '<p>' + result + '</p>';
+      // Clean up empty paragraphs
+      result = result.replace(/<p>\s*<\/p>/g, '');
+    }
+
+    return result;
+  }
+
+  // Fetch and display note for current site
+  async function fetchNoteForSite() {
+    console.log("fetchNoteForSite: Starting note fetch...");
+    try {
+      const [activeTab] = await browserAPI.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      console.log("fetchNoteForSite: Active tab:", activeTab?.url);
+
+      if (!activeTab || !activeTab.url) {
+        console.log("fetchNoteForSite: No active tab or URL");
+        return;
+      }
+
+      // Skip extension pages
+      if (activeTab.url.startsWith(browserAPI.runtime.getURL(""))) {
+        console.log("fetchNoteForSite: Skipping extension page");
+        return;
+      }
+
+      console.log("fetchNoteForSite: Sending message to background...");
+
+      // Use callback style for better cross-browser compatibility
+      browserAPI.runtime.sendMessage(
+        { action: "getNoteForSite", url: activeTab.url },
+        (response) => {
+          console.log("fetchNoteForSite: Got response in callback:", response);
+
+          if (browserAPI.runtime.lastError) {
+            console.error("fetchNoteForSite: Runtime error:", browserAPI.runtime.lastError);
+            return;
+          }
+
+          if (response && response.note) {
+            const htmlContent = parseMarkdown(response.note);
+            console.log("fetchNoteForSite: Parsed HTML:", htmlContent.substring(0, 100));
+            noteContent.innerHTML = htmlContent;
+            noteContainer.classList.add("visible");
+            console.log(`fetchNoteForSite: Displayed note for: ${response.slug}`);
+          } else {
+            console.log("fetchNoteForSite: No note found or null response");
+            noteContainer.classList.remove("visible");
+          }
+        }
+      );
+    } catch (error) {
+      console.error("fetchNoteForSite: Error:", error);
+      noteContainer.classList.remove("visible");
     }
   }
 
