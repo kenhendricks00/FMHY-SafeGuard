@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.2 (01/25/2026)
+
+#### **🔧 Enhancements**
+- **`Firefox Auto-Update Support`**  
+    - Added `update_url` to Firefox manifest for automatic extension updates.  
+    - Firefox users will now receive updates automatically without manual reinstallation.  
+
+---
+
 ## v1.3.1 (01/25/2026)
 
 #### **🐞 Bug Fixes**
