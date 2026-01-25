@@ -10,6 +10,7 @@ fmhy.pages.dev
 fmhy.xyz
 fmhy.vercel.app
 fmhy.github.io
+fmhy.samidy.com
 
 ! Grading / Tools
 fmhy-grading.pages.dev
