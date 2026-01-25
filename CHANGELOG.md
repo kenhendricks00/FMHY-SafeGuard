@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.7 (01/24/2026)
+## v1.2.7 (UNRELEASED)
 
 #### **🚀 New Features**
 - **`FMHY Notes Display`**  
@@ -33,3 +33,4 @@
     - `background.js` – Added notes mapping, fetch/cache logic, and `getNoteForSite` message handler.  
     - `index.html` – Added note display section with CSS styling.  
     - `index.js` – Added markdown parser and note fetching logic.
+
