@@ -13,6 +13,8 @@
     - Support for sites with multiple TLDs (e.g., `yts.mx`, `yts.rs`, `yts.lt` all show the same note).  
 - **`Markdown Rendering`**  
     - Notes are rendered with support for links, lists, bold, italic, and code formatting.  
+- **`AMOLED Theme`**  
+    - Added pure black AMOLED theme option for OLED displays, matching fmhy.net's theme options.  
 
 #### **🔧 Enhancements**
 - **`Improved Message Handling`**  
@@ -33,4 +35,3 @@
     - `background.js` – Added notes mapping, fetch/cache logic, and `getNoteForSite` message handler.  
     - `index.html` – Added note display section with CSS styling.  
     - `index.js` – Added markdown parser and note fetching logic.
-
