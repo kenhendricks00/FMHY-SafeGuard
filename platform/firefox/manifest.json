@@ -1,16 +1,17 @@
 {
     "manifest_version": 3,
-    "name": "FMHY SafeGuard",
+    "name": "__MSG_extensionName__",
+    "default_locale": "en",
     "author": "Kenneth Hendricks & contributors",
-    "version": "1.2.7",
+    "version": "1.3.0",
     "icons": {
         "128": "res/ext_icon_144.png"
     },
     "action": {
-      "default_icon": {
-        "128": "res/ext_icon_144.png"
-      },
-      "default_popup": "pub/index.html"
+        "default_icon": {
+            "128": "res/ext_icon_144.png"
+        },
+        "default_popup": "pub/index.html"
     },
     "options_page": "pub/settings-page.html",
     "permissions": [
@@ -73,17 +74,21 @@
                 "*://*.naver.com/*",
                 "*://*.seznam.cz/*"
             ],
-            "js": ["js/content.js"],
+            "js": [
+                "js/content.js"
+            ],
             "run_at": "document_idle"
         }
     ],
     "background": {
-        "scripts": ["js/background.js"]
+        "scripts": [
+            "js/background.js"
+        ]
     },
     "browser_specific_settings": {
         "gecko": {
             "id": "{5d554479-7cc4-487f-bd25-d8fc67a42602}"
         }
     },
-    "description": "An extension that detects starred, safe, unsafe or potentially unsafe sites using the FMHY Filterlist."
+    "description": "__MSG_extensionDescription__"
 }
