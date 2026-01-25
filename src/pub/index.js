@@ -65,8 +65,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       // Italic
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // Links
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Markdown links [text](url) - use placeholder to avoid double-linking
+      .replace(/\[(.*?)\]\((.*?)\)/g, '[[LINK:$2:$1]]');
+    
+    // Raw URLs (convert before restoring markdown links)
+    result = result.replace(/(https?:\/\/[^\s<>\)\]]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    // Restore markdown links from placeholders
+    result = result.replace(/\[\[LINK:(.*?):(.*?)\]\]/g, '<a href="$1" target="_blank">$2</a>');
+
+    result = result
       // Code
       .replace(/`(.*?)`/g, '<code>$1</code>')
       // List items - convert to proper list
