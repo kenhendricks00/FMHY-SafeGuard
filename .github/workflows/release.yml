@@ -104,3 +104,30 @@ jobs:
           asset_path: dist/FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi
           asset_name: FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi
           asset_content_type: application/x-xpinstall
+
+      - name: Update Firefox updates.json
+        if: env.VERSION != 'dev-version'
+        run: |
+          cat > updates.json << EOF
+          {
+            "addons": {
+              "{5d554479-7cc4-487f-bd25-d8fc67a42602}": {
+                "updates": [
+                  {
+                    "version": "${VERSION#v}",
+                    "update_link": "https://github.com/fmhy/FMHY-SafeGuard/releases/download/${{ env.VERSION }}/FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi"
+                  }
+                ]
+              }
+            }
+          }
+          EOF
+
+      - name: Commit and Push updates.json
+        if: env.VERSION != 'dev-version'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add updates.json
+          git commit -m "Update Firefox updates.json for ${{ env.VERSION }}" || echo "No changes to commit"
+          git push origin HEAD:main
