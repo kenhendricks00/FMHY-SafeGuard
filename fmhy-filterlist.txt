@@ -3,24 +3,39 @@
 ! Domain + Backup Domains
 fmhy.net
 pastes.fmhy.net
+paste.fmhy.net
 fmhy.lol
 guides.fmhy.lol
 fmhy.pages.dev
 fmhy.xyz
 fmhy.vercel.app
+fmhy.github.io
+
+! Grading / Tools
+fmhy-grading.pages.dev
+ffmhy.pages.dev
+cbg.fmhy.bid
 
 ! Rentry Backups
 https://rentry.co/FMHY
 https://rentry.org/FMHY
 https://rentry.co/FMHYbackups
 https://rentry.org/FMHYbackups
+https://rentry.co/FMHYB64
+https://rentry.org/FMHYB64
 https://rentry.org/piracy
 https://rentry.co/piracy
 https://rentry.co/The-Piracy-Glossary
 https://rentry.org/The-Piracy-Glossary
+https://rentry.org/Piracy-BG
 
 ! GitHub Projects
 github.com/fmhy
+github.com/fmhy/FMHY
+github.com/fmhy/edit
+github.com/fmhy/FMHYFilterlist
+github.com/fmhy/FMHY-SafeGuard
+github.com/fmhy/snowbin
 github.com/taskyland/snowbin
 
 ! Extensions 
