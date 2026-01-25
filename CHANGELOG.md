@@ -15,23 +15,34 @@
     - Notes are rendered with support for links, lists, bold, italic, and code formatting.  
 - **`AMOLED Theme`**  
     - Added pure black AMOLED theme option for OLED displays, matching fmhy.net's theme options.  
+- **`Unsafe Site Reasons`**  
+    - Warning page and popup now display the reason why a site is flagged as unsafe.  
+    - Reasons are fetched from the FMHY Filterlist repository and include clickable evidence links.  
 
 #### **🔧 Enhancements**
 - **`Improved Message Handling`**  
     - Converted async message listener to Promise-based pattern for better cross-browser compatibility.  
 - **`Better Popup Display`**  
     - Notes appear in a styled collapsible section below the site status.  
+- **`Reason Display Styling`**  
+    - Popup shows reasons in a dedicated container with alert-triangle icon matching the notes feature.  
+    - Warning page displays reasons in a styled box with clickable links.  
 
 #### **🐞 Bug Fixes**
 - **`Fixed Async Response Handling`**  
     - Resolved issue where async message listeners returned `Promise<false>` instead of keeping the channel open.  
 - **`Fixed Markdown Formatting`**  
     - Popup markdown parser now properly removes duplicate headers and handles paragraphs correctly.  
+- **`Fixed Reason Not Displaying`**  
+    - Resolved issue where unsafe site reasons were not being passed to the warning page.  
+    - Added fallback to fetch reasons from URL if storage is empty.  
 
 #### **🔍 Technical Details**
 - **`New Files`**  
     - `notes-mapping.js` – Standalone reference file for domain-to-note mappings.  
 - **`Modified Files`**  
-    - `background.js` – Added notes mapping, fetch/cache logic, and `getNoteForSite` message handler.  
-    - `index.html` – Added note display section with CSS styling.  
-    - `index.js` – Added markdown parser and note fetching logic.
+    - `background.js` – Added notes mapping, fetch/cache logic, `getNoteForSite` message handler, and async `getReasonForDomain` function.  
+    - `index.html` – Added note and reason display sections with CSS styling.  
+    - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
+    - `warning-page.html` – Added CSS for clickable links in reason text.  
+    - `warning-page.js` – Added URL-to-link conversion for reason display.
