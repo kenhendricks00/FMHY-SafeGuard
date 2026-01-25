@@ -53,6 +53,10 @@
 - **Updated Filterlists**: Utilizes the frequently updated FMHY filterlist to ensure protection from the latest unsafe domains.
 - **Pop-up Alerts**: Get easy-to-read pop-ups that inform you about the site status and allow further action.
 - **Search Engine-Focused Highlighting**: Seamlessly highlights links on search engines with colors and icons, instantly showing if a site is safe, unsafe, or potentially dangerous.
+- **FMHY Notes**: View relevant notes from the FMHY wiki when visiting mapped websites with 80+ domain mappings.
+- **Unsafe Site Reasons**: See exactly why a site is flagged as unsafe with detailed reasons and clickable evidence links.
+- **Multi-Language Support**: Available in 7 languages: English, Spanish, Russian, German, Portuguese, French, and Japanese.
+- **Theme Options**: Beautiful dark, light, and AMOLED themes with system preference detection.
 
 # 📋 Usage Instructions
 
