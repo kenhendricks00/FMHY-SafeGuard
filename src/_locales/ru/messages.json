@@ -96,8 +96,14 @@
     }
   },
   "statusNoData": {
-    "message": "Не удалось проверить статус сайта. Пожалуйста, попробуйте позже.",
-    "description": "No data available message"
+    "message": "Нет данных для <strong>$DOMAIN$</strong>.",
+    "description": "No data available message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
   },
   "warningPageTitle": {
     "message": "FMHY SafeGuard - Предупреждение",

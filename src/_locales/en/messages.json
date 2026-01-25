@@ -96,8 +96,14 @@
     }
   },
   "statusNoData": {
-    "message": "Unable to check site status. Please try again later.",
-    "description": "No data available message"
+    "message": "No data available for <strong>$DOMAIN$</strong>.",
+    "description": "No data available message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
   },
   "warningPageTitle": {
     "message": "FMHY SafeGuard - Warning",

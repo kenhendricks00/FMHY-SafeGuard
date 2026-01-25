@@ -161,6 +161,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Current URL:", currentUrl);
       console.log("Root URL:", rootUrl);
 
+      // Handle browser internal pages (newtab, settings, etc.)
+      if (
+        currentUrl.startsWith("chrome://") ||
+        currentUrl.startsWith("about:") ||
+        currentUrl.startsWith("edge://") ||
+        currentUrl.startsWith("brave://") ||
+        currentUrl.startsWith("opera://") ||
+        currentUrl.startsWith("vivaldi://")
+      ) {
+        handleStatusUpdate("browser_page", currentUrl);
+        return;
+      }
+
       // Handle extension pages
       if (
         currentUrl.startsWith(warningPageUrl) ||
@@ -307,6 +320,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       case "starred":
         message = getMessage("statusStarred", displayUrl) || `${displayUrl} is a <strong>starred</strong> site.`;
         break;
+      case "browser_page":
+        message = "This is a <strong>browser page</strong>.";
+        break;
       case "extension_page":
         if (displayUrl.startsWith(warningPageUrl)) {
           message =
@@ -322,7 +338,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         break;
       case "no_data":
-        message = getMessage("statusNoData") || `No data available for <strong>${displayUrl}</strong>.`;
+        message = getMessage("statusNoData", displayUrl) || `No data available for <strong>${displayUrl}</strong>.`;
         break;
       default:
         message = getMessage("statusUnknown", displayUrl) || `${displayUrl} is not in our database.`;
@@ -338,6 +354,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       fmhy: "../res/icons/fmhy.png",
       safe: "../res/icons/safe.png",
       starred: "../res/icons/starred.png",
+      browser_page: "../res/ext_icon_144.png",
       extension_page: "../res/ext_icon_144.png",
       no_data: "../res/ext_icon_144.png",
       error: "../res/icons/error.png",
