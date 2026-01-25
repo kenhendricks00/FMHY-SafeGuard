@@ -196,15 +196,9 @@
     .update-status {
       font-size: 0.875rem;
       color: var(--text-secondary);
-      text-align: right;
-      padding: 0.5rem 0.75rem;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 8px;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
       gap: 0.5rem;
-      margin-top: 1rem;
     }
 
     .update-icon {
@@ -426,6 +420,63 @@
       opacity: 0.95;
     }
 
+    .update-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0.75rem;
+      min-height: 32px;
+    }
+
+    .update-now-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid var(--section-border);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .update-now-btn svg {
+      stroke: var(--text-secondary) !important;
+    }
+
+    .update-now-btn svg path {
+      stroke: inherit;
+    }
+
+    .update-now-btn:hover {
+      background: rgba(128, 128, 128, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--text-primary);
+    }
+
+    .update-now-btn:hover svg {
+      stroke: var(--text-primary) !important;
+    }
+
+    .update-now-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .update-now-btn.updating svg {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .btn:active {
       transform: translateY(0);
     }
@@ -522,12 +573,18 @@
           </div>
         </div>
 
-        <div class="update-status" id="updateStatus">
-          <svg class="update-icon" viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor"
-              d="M12 4V2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12H20C20 16.418 16.418 20 12 20C7.582 20 4 16.418 4 12C4 7.582 7.582 4 12 4Z" />
-          </svg>
-          Next update scheduled for: Checking...
+        <div class="update-row">
+          <div class="update-status" id="updateStatus">
+            <svg class="update-icon" viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor"
+                d="M12 4V2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12H20C20 16.418 16.418 20 12 20C7.582 20 4 16.418 4 12C4 7.582 7.582 4 12 4Z" />
+            </svg>
+            Next update scheduled for: Checking...
+          </div>
+          <button id="updateNowBtn" class="update-now-btn">
+            <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            <span data-i18n="updateNow">Update Now</span>
+          </button>
         </div>
       </div>
 

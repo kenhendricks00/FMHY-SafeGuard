@@ -675,7 +675,7 @@ function checkSiteAndUpdatePageAction(tabId, url) {
 async function shouldUpdate() {
   try {
     const { lastUpdated } = await browserAPI.storage.local.get("lastUpdated");
-    const { updateFrequency = "daily" } = await browserAPI.storage.sync.get({
+    const { updateFrequency = "daily" } = await browserAPI.storage.local.get({
       updateFrequency: "daily",
     });
 
@@ -703,7 +703,7 @@ async function setupUpdateSchedule() {
   await browserAPI.alarms.clearAll();
 
   // Get the user's preferred update frequency from storage
-  const { updateFrequency } = await browserAPI.storage.sync.get({
+  const { updateFrequency } = await browserAPI.storage.local.get({
     updateFrequency: "daily",
   });
 

@@ -354,5 +354,21 @@
   "welcomeStep3Item5": {
     "message": "Link-Hervorhebungsfarben anpassen",
     "description": "Welcome step 3 item 5"
+  },
+  "updateNow": {
+    "message": "Jetzt aktualisieren",
+    "description": "Update now button text"
+  },
+  "updating": {
+    "message": "Aktualisiere...",
+    "description": "Updating status text"
+  },
+  "filterlistUpdated": {
+    "message": "Filterliste erfolgreich aktualisiert!",
+    "description": "Filterlist update success message"
+  },
+  "updateFailed": {
+    "message": "Aktualisierung fehlgeschlagen. Bitte erneut versuchen.",
+    "description": "Filterlist update failed message"
   }
 }

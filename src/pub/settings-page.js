@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lastUpdated = document.getElementById("lastUpdated");
   const updateStatus = document.getElementById("updateStatus");
   const forceRefreshButton = document.getElementById("forceRefresh");
+  const updateNowBtn = document.getElementById("updateNowBtn");
 
   // Get link highlighting elements
   const highlightTrustedToggle = document.getElementById(
@@ -440,6 +441,30 @@ document.addEventListener("DOMContentLoaded", () => {
       loadFilterlistStats();
     }
   });
+
+  // Update Now button handler
+  if (updateNowBtn) {
+    updateNowBtn.addEventListener("click", async () => {
+      updateNowBtn.disabled = true;
+      updateNowBtn.classList.add("updating");
+      const originalText = updateNowBtn.querySelector("span") || updateNowBtn;
+      const btnText = updateNowBtn.textContent;
+      updateNowBtn.querySelector("span").textContent = window.i18n ? window.i18n.getMessage("updating") : "Updating...";
+      
+      try {
+        await browserAPI.runtime.sendMessage({ action: "forceUpdate" });
+        await loadFilterlistStats();
+        showNotification(window.i18n ? window.i18n.getMessage("filterlistUpdated") : "Filterlist updated successfully!");
+      } catch (error) {
+        console.error("Update failed:", error);
+        showNotification(window.i18n ? window.i18n.getMessage("updateFailed") : "Update failed. Please try again.");
+      } finally {
+        updateNowBtn.disabled = false;
+        updateNowBtn.classList.remove("updating");
+        updateNowBtn.querySelector("span").textContent = window.i18n ? window.i18n.getMessage("updateNow") : "Update Now";
+      }
+    });
+  }
 
   setInterval(updateNextUpdateStatus, 60000);
 });

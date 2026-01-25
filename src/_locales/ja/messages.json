@@ -354,5 +354,21 @@
   "welcomeStep3Item5": {
     "message": "リンクハイライトの色をカスタマイズ",
     "description": "Welcome step 3 item 5"
+  },
+  "updateNow": {
+    "message": "今すぐ更新",
+    "description": "Update now button text"
+  },
+  "updating": {
+    "message": "更新中...",
+    "description": "Updating status text"
+  },
+  "filterlistUpdated": {
+    "message": "フィルターリストが正常に更新されました！",
+    "description": "Filterlist update success message"
+  },
+  "updateFailed": {
+    "message": "更新に失敗しました。もう一度お試しください。",
+    "description": "Filterlist update failed message"
   }
 }

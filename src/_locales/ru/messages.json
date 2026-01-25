@@ -354,5 +354,21 @@
   "welcomeStep3Item5": {
     "message": "Настройте цвета подсветки ссылок",
     "description": "Welcome step 3 item 5"
+  },
+  "updateNow": {
+    "message": "Обновить сейчас",
+    "description": "Update now button text"
+  },
+  "updating": {
+    "message": "Обновление...",
+    "description": "Updating status text"
+  },
+  "filterlistUpdated": {
+    "message": "Список фильтров успешно обновлён!",
+    "description": "Filterlist update success message"
+  },
+  "updateFailed": {
+    "message": "Ошибка обновления. Попробуйте ещё раз.",
+    "description": "Filterlist update failed message"
   }
 }

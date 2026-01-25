@@ -354,5 +354,21 @@
   "welcomeStep3Item5": {
     "message": "Personaliza los colores de resaltado de enlaces",
     "description": "Welcome step 3 item 5"
+  },
+  "updateNow": {
+    "message": "Actualizar ahora",
+    "description": "Update now button text"
+  },
+  "updating": {
+    "message": "Actualizando...",
+    "description": "Updating status text"
+  },
+  "filterlistUpdated": {
+    "message": "¡Lista de filtros actualizada correctamente!",
+    "description": "Filterlist update success message"
+  },
+  "updateFailed": {
+    "message": "Error en la actualización. Inténtalo de nuevo.",
+    "description": "Filterlist update failed message"
   }
 }
