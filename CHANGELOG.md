@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.1 (01/25/2026)
+
+#### **🐞 Bug Fixes**
+- **`Fixed Browser Page Display`**  
+    - Fixed popup showing broken `$DOMAIN$` placeholder on browser internal pages (newtab, settings, etc.).  
+    - Added proper handling for `chrome://`, `about:`, `edge://`, `brave://`, `opera://`, and `vivaldi://` URLs.  
+- **`Fixed No Data Status Message`**  
+    - Fixed "Unable to check site status" error message for unknown sites.  
+    - Now correctly displays "No data available for [domain]" with the actual domain name.  
+
+---
+
 ## v1.3.0 (01/25/2026)
 
 #### **🚀 New Features**
@@ -66,4 +78,3 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
-
