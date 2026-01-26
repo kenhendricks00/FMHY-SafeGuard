@@ -15,6 +15,10 @@
 - **`Fixed FMHY Note Image Rendering`**  
     - Images in FMHY Notes now render properly instead of showing raw URLs.  
     - Both markdown and HTML image formats are supported.  
+- **`Fixed Subdomain Note Detection`**  
+    - FMHY Notes now correctly display on site subdomains (forum.mobilism.org, chat.pollinations.ai, m.twitch.tv, etc.).  
+    - Updated pattern matching for: 1337x, yts, audiobookbay, sanet, softarchive, mobilism, rgshows, twitch.tv, huggingface.co, pollinations.ai, 4pda.  
+    - Added support for archive.is mirrors (archive.today, archive.ph, archive.fo, etc.).  
 
 ---
 
