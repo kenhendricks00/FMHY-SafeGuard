@@ -61,6 +61,175 @@ let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
 const notesCache = new Map(); // Cache for fetched notes
 
+// Base64 Starred Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
+const base64StarredLinksEncoded = [
+  "aHR0cHM6Ly9nZW4ucGFyYW1vcmUuc3Uv",
+  "aHR0cHM6Ly9tYXNzZ3JhdmUuZGV2Lw==",
+  "aHR0cHM6Ly9naXRodWIuY29tL21hc3NncmF2ZWwvTWljcm9zb2Z0LUFjdGl2YXRpb24tU2NyaXB0cy8=",
+  "aHR0cHM6Ly9teXJpZW50LmVyaXN0YS5tZS8=",
+  "aHR0cHM6Ly9jYWJsZS5heXJhLmNoL21ha2Vta3Yv",
+  "aHR0cHM6Ly9maXJlaGF3azUyLmNvbS8=",
+  "aHR0cHM6Ly92YWRhcGF2Lm1vdi8=",
+];
+const base64StarredLinks = base64StarredLinksEncoded.map(e => atob(e));
+
+// Base64 Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
+const base64SafeLinksEncoded = [
+  "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMTNCODIzdWt4ZFZNb2Nvd28xczVYblQzdHpjaU9mcnVoVVZlUEVOS2MwMW8v",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL0BjaGFkbWFzdGVyP3NvcnQ9LWRvd25sb2FkcyZhbmQlNUIlNUQ9c3ViamVjdCUzQSUyMmZibiUyMg==",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL1RPU0VDX1YyMDE3LTA0LTIz",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL3Rvc2Vj",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL3NvZnR3YXJlbGlicmFyeV9mbGFzaA==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vS0dLaHZaWlQ=",
+  "aHR0cHM6Ly9naXRodWIuY29tL2t1cm9uZzAwL0dhbWVQcm9ncmFtQm9va3M=",
+  "aHR0cHM6Ly9kaXNjb3JkLmNvbS9pbnZpdGUvNGpyRjlWNGg1aA==",
+  "aHR0cHM6Ly9zbWJ4YXJjaGl2ZS53b2hsc29mdC5ydS8=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vcDQ3VGY5Y3o=",
+  "aHR0cHM6Ly9raW5kbGVtb2RkaW5nLm9yZy8=",
+  "aHR0cHM6Ly9kaXNjb3JkLmNvbS9pbnZpdGUvd0RiYlpURjVRRg==",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9RnVsbCtSZXRyb2FjaGlldmVtZW50cytjb2xsZWN0aW9uJTJDK1VwZGF0ZWQrSnVsKzMlMkMrMjAyNA==",
+  "aHR0cHM6Ly9naXRodWIuY29tL1VsdHJhR29kQXpnb3JhdGgvVW5vZmZpY2lhbC1SQS1EQVRz",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vZDlNaEQxd2Y=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL21hbmdhX2xpYnJhcnk=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vTkNRYTRaVjM=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL3JhZGlvbm93aGVyZQ==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vQWNka255RFk=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL25ld3NwYXBlcnM=",
+  "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMVRGZFFQYXBlbzhEZS1nUDdBSTIxd3pDVV9wbWhfYXhfNWhmWi1HaEpXbm8v",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL3ZpbnRhZ2Vzb2Z0d2FyZQ==",
+  "aHR0cHM6Ly93d3cudG9ycmVudGVjaC5vcmcv",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vckZLcnE5R1c=",
+  "aHR0cHM6Ly9jb2RlYy5reWl2LnVhLw==",
+  "aHR0cHM6Ly9jb2RlYy5reWl2LnVhL2FkMGJlLmh0bWw=",
+  "aHR0cHM6Ly9jb2RlYy5reWl2LnVhL0F1ZGkwLmh0bQ==",
+  "aHR0cHM6Ly9yZW50cnkuY28vR2FtZS1Nb2Rz",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9bmF0aXZlLWxpbnV4LWdhbWVzLWNvbGxlY3Rpb24mYW5kJTVCJTVEPW1lZGlhdHlwZSUzQSUyMmNvbGxlY3Rpb24lMjI=",
+  "aHR0cHM6Ly9naXRodWIuY29tL2FtaWF5d2ViL0h5dGFsZS1GMlA=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vTXR3dm5NTFc=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9c3ViamVjdCUzQSUyMm5vLWludHJvJTIyJnNvcnQ9LXdlZWs=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20va1I2WWVUdUg=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9Y3JlYXRvciUzQSUyMkFsdlJvJTIy",
+  "aHR0cHM6Ly9ncnVudG1vZHMuY29tLw==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vaWV5bkttbk0=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vRFBHYnZrc1U=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vN3B2eGFmclg=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vS1NuZ25lZGU=",
+  "aHR0cHM6Ly9naXRodWIuY29tL2x1Y2hpbmEtZ2FicmllbC9PU1gtUFJPWE1PWA==",
+  "aHR0cHM6Ly9yZW50cnkuY28vc3dpdGNoZW11bGF0aW9u",
+  "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZG9jdW1lbnQvZC8xcHJ4T0phRTRXaFBlWU5IVzE3VzVVYVdaeFpEZ0I4ZTV3Tkh4dDJPNEZLdnMv",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vZTFjRjh6M2g=",
+  "aHR0cHM6Ly9iZWFtbmcud2VzdXBwbHkuY3gv",
+  "aHR0cHM6Ly9tb2UubW9oa2cxMDE3LnByby8=",
+  "aHR0cHM6Ly93d3cuc2hvZGFuLmlvL3NlYXJjaD9xdWVyeT1zZXJ2ZXIlM0ErY2FsaWJyZQ==",
+  "aHR0cHM6Ly9naXN0LmdpdGh1Yi5jb20vc3Vnb2lkb2dvLzJlNjA3NzI3Y2Q2MTMyNGIyZDI5MmRhOTY5NjFkZTNm",
+  "aHR0cHM6Ly9ncmVhc3lmb3JrLm9yZy9lbi9zY3JpcHRzLzQ2NTI3Ng==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vYTFSZ1NaVVo=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vWmVpTFRNZXM=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9Y3JlYXRvciUzQSUyMnN0cnVnZ2xleiUyMittaXh0YXBlcw==",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9ZGptaXhlc19jb2xsZWN0aW9uX2J5X29WUE4udG8mc29ydD10aXRsZSZhbmQlNUIlNUQ9c3ViamVjdCUzQSUyMmxpdmVzZXRzJTIy",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vajNzRks2dGE=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vMUU1c0hQRFA=",
+  "aHR0cHM6Ly9zbTY0cm9taGFja3MuY29tLw==",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9Y3JlYXRvciUzQSUyMkFycXVpdmlzdGEuZXhlJTIy",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vaXZVZ1hBRGo=",
+  "aHR0cHM6Ly9wb2tlbWVyYWxkLmNvbS8=",
+  "aHR0cHM6Ly93d3cuaGFja2RleC5hcHAv",
+  "aHR0cHM6Ly93d3cucG9rZWhhcmJvci5jb20v",
+  "aHR0cHM6Ly93d3cucG9rZW1vbmNvZGVycy5jb20v",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vR2lpdzJWeEM=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vZEN4YzIxUEQ=",
+  "aHR0cHM6Ly9yZW50cnkuY28vZ25hcmx5X3JlcGFja3M=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vN1NYd0RFaXk=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vd2NnckxMNEc=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL0ByYXZlZG93bmxvYWRzP3F1ZXJ5PXJhdmUrbGlicmFyeQ==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vRzloV3hxVmk=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9Y3JlYXRvciUzQSUyMlVua25vd24lMjIrK09mZmljaWFsbHkrVHJhbnNsYXRlZCtMaWdodCtOb3ZlbHMr",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vVnRVVEVLcDI=",
+  "aHR0cHM6Ly9yb21oZWF2ZW4uY29tL2NzZg==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vWThjRWMwUDA=",
+  "aHR0cHM6Ly9naXRodWIuY29tL1RlYW0tUmVzdXJnZW50",
+  "aHR0cHM6Ly9yZW50cnkuY28vYWZmaW5pdHlub2xvZ2lu",
+  "aHR0cHM6Ly9zbXdkYi5tZS8=",
+  "aHR0cHM6Ly9kZXYuc251YmJ5LnRvcC8=",
+  "aHR0cHM6Ly93d3cuMTMzN3gudG8vdXNlci9LYU9zS3Jldy8=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vckpxZ3J1TXY=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vUEZwdmYzSzA=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vNFdIdVpNVHY=",
+  "aHR0cHM6Ly93d3cuMTMzN3gudG8vc29ydC1zZWFyY2gvZG9kaS9zZWVkZXJzL2Rlc2MvMS8=",
+  "aHR0cHM6Ly92ay5jb20vZG91amlubXVzaWM=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vS2sydXplaVA=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9UElDT3dlc29tZQ==",
+  "aHR0cHM6Ly9mb3J1bXMubXlkaWdpdGFsbGlmZS5uZXQvZm9ydW1zL21pY3Jvc29mdC1vZmZpY2UuMzUvP29yZGVyPXZpZXdfY291bnQ=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vaGhYNk50eHc=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vdURteTE1aUQ=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9R09BK1BzeVRyYW5jZStMaXZlc2V0cw==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vTUQ3Z002ZGU=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20veEhWdTFFSDg=",
+  "aHR0cHM6Ly9naXRodWIuY29tL0V6ei1sb2wvYm9paWktZnJlZS9yZWxlYXNlcw==",
+  "aHR0cHM6Ly9kaXNjb3JkLmNvbS9pbnZpdGUvRVZ6clcyWWRUSw==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vc0hMQ3VLRTM=",
+  "aHR0cHM6Ly9naXRodWIuY29tL3F0Y2hhb3MvcHlfbWVnYV9hY2NvdW50X2dlbmVyYXRvcg==",
+  "aHR0cHM6Ly9naXRodWIuY29tL2Ytby9NRUdBLUFjY291bnQtR2VuZXJhdG9y",
+  "aHR0cHM6Ly9naXRodWIuY29tL3F0Y2hhb3MvcHlfbWVnYV9hY2NvdW50X2dlbmVyYXRvci9pc3N1ZXMvMTYjaXNzdWVjb21tZW50LTI1Nzk2MzUzNzQ=",
+  "aHR0cHM6Ly9naXRodWIuY29tL2hhcnJ5ZWZmaW5wb3R0ZXIvSVNBQUM=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vQW44NFVqNEQ=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vUG53OXJFMUQ=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vY2lKNE1meUY=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vNEZSOGVyeXI=",
+  "aHR0cHM6Ly9yZW50cnkuY28vb25ia3NkZ3U=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vUDNoVFVrNlI=",
+  "aHR0cHM6Ly9naXRodWIuY29tL2JyYWRyZXZhbnMvbXlyaWVudC1kb3dubG9hZGVy",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9RE9PTStXQURzJnNvcnQ9LWRvd25sb2Fkcw==",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vOHdjeW0zcFc=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vejEyVWp4blk=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vVlljZzhFZVQ=",
+  "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vOEdRQkNoa0E=",
+  "aHR0cHM6Ly9saWIybGlmZS5pbi8=",
+  "aHR0cHM6Ly9oY3M2NC5jb20v",
+  "aHR0cHM6Ly9tYWRva2FtaS5hbC8=",
+  "aHR0cHM6Ly9zaW5mbGl4LmNsdWIv",
+  "aHR0cHM6Ly9zdGFydGJhY2submV0Lw==",
+  "aHR0cHM6Ly9rcG9wZXhwbG9yZXIubmV0Lw==",
+  "aHR0cHM6Ly9jYW52YS5jb20vYnJhbmQvam9pbj90b2tlbj1nUkh2bnZSbm1qTE5ZRm5xU3o1LVJ3JnJlZmVycmVyPXRlYW0taW52aXRl",
+  "aHR0cHM6Ly9oYXlhc2UubW9lLw==",
+  "aHR0cHM6Ly9yb21jZW50ZXIuY29tLw==",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9kZXRhaWxzL0BhcmNoaXZlcl9lcGg=",
+  "aHR0cHM6Ly9hY2VzdHJlYW1zZWFyY2gubmV0L2VuLw==",
+  "aHR0cHM6Ly9saWdodGRsLnh5ei8=",
+  "aHR0cHM6Ly9zY2VuZWNhdC5jb20v",
+  "aHR0cHM6Ly9ldGRsLmluLw==",
+  "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvMXNGSE5RS0ozSDgxblhpU1Bxc2xZdXJxdUJGSnJVLVg5cW9yMTR1WEJ1ZW8v",
+  "aHR0cHM6Ly9zY2xvdWR4LmxvbC8=",
+  "aHR0cHM6Ly94LmNvbS9yaXBwZXJzYXJjaGl2ZQ==",
+  "aHR0cHM6Ly90Lm1lL0dBTUVTTmludGVuZG9TV0lUQ0g=",
+  "aHR0cHM6Ly9pc2FpZHViLmZyZWUv",
+  "aHR0cHM6Ly90Lm1lL0VzZXRLZXlSb2JvdA==",
+  "aHR0cHM6Ly90Lm1lL2VzZXRrZXl6X2JvdA==",
+  "aHR0cHM6Ly9ib290bGVnLnJhZGlvY2xhc2guY29tLw==",
+  "aHR0cHM6Ly9hY2VybW92aWVzLmZ1bi8=",
+  "aHR0cHM6Ly9hcmNoaXZlLm9yZy9zZWFyY2g/cXVlcnk9Y3JlYXRvciUzQSUyMk0lQzMlQTBnaXRvJTIyK29mZmljaWFsJnNvcnQ9LXdlZWsmYW5kJTVCJTVEPXN1YmplY3QlM0ElMjJtYWdpcGFjayUyMg==",
+  "aHR0cDovL3cxNy5tb25rcnVzLndzLw==",
+  "aHR0cHM6Ly9tb25rcnVzLmR2dXp1LmNvbS8=",
+  "aHR0cHM6Ly92ay5jb20vbW9ua3J1cw==",
+  "aHR0cHM6Ly90Lm1lL3JlYWxfbW9ua3J1cw==",
+  "aHR0cHM6Ly9tZWRhbGJ5cGFzcy52ZXJjZWwuYXBwLw==",
+  "aHR0cHM6Ly9hLjExMTQ3Ny54eXov",
+  "aHR0cHM6Ly93d3cueGJpbnMub3JnL2FwcGxpc3QucGhw",
+  "aHR0cHM6Ly9kaXNjb3JkLmdnL3NhdHZybg==",
+  "aHR0cHM6Ly9yZW50cnkuY28vUk9NLUNvbGxlY3Rpb25z",
+  "aHR0cHM6Ly9mbHVmZmxlLmNjL2FxZw==",
+  "aHR0cHM6Ly9yZW50cnkuY28vamV0YnJhaW5zZnJlZQ==",
+  "aHR0cHM6Ly9naXRsYWIuY29tL2lnbmFjaW9jYXN0cm8vYS1kb3ZlLWlzLWR1bWIv",
+  "aHR0cHM6Ly9nYW1lcy5vdm9zaW1wYXRpY28uY29tLw==",
+  "aHR0cHM6Ly9teXJpZW50Lm1haG91Lm9uZS8=",
+  "aHR0cHM6Ly9sb3N0YjF0LmdpdGh1Yi5pby9yb21zZWFyY2gv",
+  "aHR0cHM6Ly9yZXBhY2tzYnkuZHlyZW4ubG9sL2NiLmh0bWw=",
+  "aHR0cHM6Ly93d3cuY2xvd25zZWMuY29tLzNkcy8=",
+  "aHR0cHM6Ly9zaXRlcy5nb29nbGUuY29tL3ZpZXcvM2RzbW92aWVzLw==",
+  "aHR0cHM6Ly9naXRodWIuY29tL0Nvc21pY1NjYWxlL1BTQkJOLURlZmluaXRpdmUtRW5nbGlzaC1QYXRjaA==",
+];
+const base64DecodedLinks = base64SafeLinksEncoded.map(e => atob(e));
+
 // List of search engines to check against
 const searchEngines = [
   "google.com",
@@ -438,13 +607,22 @@ function extractUrlsFromFilterList(text) {
 }
 
 // Extract hostnames from a list of URLs for domain-level matching
+// Only extract hostnames from domain-only URLs (no significant path)
+// URLs with paths like rentry.co/FMHY should NOT match at domain level
 function extractHostnamesFromUrls(urls) {
   return urls.map((url) => {
     try {
       const urlObj = new URL(url);
-      return urlObj.hostname;
+      // Only include hostname if the URL has no significant path
+      // (path is empty, "/", or just trailing slash)
+      const path = urlObj.pathname;
+      if (path === "" || path === "/") {
+        return urlObj.hostname;
+      }
+      return null; // Don't include hostnames from URLs with paths
     } catch (e) {
-      return url; // Return as-is if not a valid URL
+      // If not a valid URL, it's likely just a domain - include it
+      return url;
     }
   }).filter((hostname) => hostname !== null);
 }
@@ -873,10 +1051,26 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else if (safeSites.includes(normalizedUrl)) {
           status = "safe";
           matchedUrl = normalizedUrl;
+        } else if (base64StarredLinks.some(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl))) {
+          status = "starred";
+          matchedUrl = normalizedUrl;
+        } else if (base64DecodedLinks.some(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl))) {
+          status = "safe";
+          matchedUrl = normalizedUrl;
         }
 
-        // If no match for full URL and it's a repository site, don't try domain matching
+        // If no match for full URL and it's a repository site, check Base64 links then return
         if (status === "no_data" && isRepoSite) {
+          const base64StarredMatch = base64StarredLinks.find(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl));
+          if (base64StarredMatch) {
+            sendResponse({ status: "starred", matchedUrl: base64StarredMatch });
+            return;
+          }
+          const base64Match = base64DecodedLinks.find(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl));
+          if (base64Match) {
+            sendResponse({ status: "safe", matchedUrl: base64Match });
+            return;
+          }
           console.log(`No match for repository URL: ${normalizedUrl}`);
           sendResponse({ status: "no_data", matchedUrl: normalizedUrl });
           return;
@@ -887,14 +1081,12 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           console.log(`No match for full URL, trying domain: ${domain}`);
 
           // Check domain against regex patterns (use hostname-only regex for domain matching)
+          // Note: FMHY sites only match exact URLs, not domain-level
           if (unsafeHostnamesRegex?.test(domain)) {
             status = "unsafe";
             matchedUrl = `https://${domain}`;
           } else if (potentiallyUnsafeHostnamesRegex?.test(domain)) {
             status = "potentially_unsafe";
-            matchedUrl = `https://${domain}`;
-          } else if (fmhyHostnamesRegex?.test(domain)) {
-            status = "fmhy";
             matchedUrl = `https://${domain}`;
           }
 
@@ -921,6 +1113,38 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (safeUrlObj.hostname === domain) {
                   status = "safe";
                   matchedUrl = safeUrl;
+                  break;
+                }
+              } catch (e) {
+                continue;
+              }
+            }
+          }
+
+          // Check Base64 starred links by domain first
+          if (status === "no_data") {
+            for (const b64Url of base64StarredLinks) {
+              try {
+                const b64UrlObj = new URL(b64Url);
+                if (b64UrlObj.hostname === domain) {
+                  status = "starred";
+                  matchedUrl = b64Url;
+                  break;
+                }
+              } catch (e) {
+                continue;
+              }
+            }
+          }
+
+          // Check Base64 decoded links by domain
+          if (status === "no_data") {
+            for (const b64Url of base64DecodedLinks) {
+              try {
+                const b64UrlObj = new URL(b64Url);
+                if (b64UrlObj.hostname === domain) {
+                  status = "safe";
+                  matchedUrl = b64Url;
                   break;
                 }
               } catch (e) {
@@ -1021,6 +1245,9 @@ function getStatusFromLists(url) {
       if (fmhySitesRegex?.test(url)) return "fmhy";
       if (starredSites.includes(url)) return "starred";
       if (safeSites.includes(url)) return "safe";
+      // Check Base64 starred links first, then safe links (exact URL match for repos)
+      if (base64StarredLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "starred";
+      if (base64DecodedLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "safe";
       return "no_data"; // No domain-only matches for repos
     }
 
@@ -1030,11 +1257,14 @@ function getStatusFromLists(url) {
     if (fmhySitesRegex?.test(url)) return "fmhy";
     if (starredSites.includes(url)) return "starred";
     if (safeSites.includes(url)) return "safe";
+    // Check Base64 starred links first, then safe links
+    if (base64StarredLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "starred";
+    if (base64DecodedLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "safe";
 
     // Then check domain-level (use hostname-only regex for domain matching)
+    // Note: FMHY sites only match exact URLs, not domain-level
     if (unsafeHostnamesRegex?.test(domain)) return "unsafe";
     if (potentiallyUnsafeHostnamesRegex?.test(domain)) return "potentially_unsafe";
-    if (fmhyHostnamesRegex?.test(domain)) return "fmhy";
 
     // Try domain-level checks for starred and safe
     for (const starredUrl of starredSites) {
@@ -1050,6 +1280,26 @@ function getStatusFromLists(url) {
       try {
         const safeUrlObj = new URL(safeUrl);
         if (safeUrlObj.hostname === domain) return "safe";
+      } catch (e) {
+        continue;
+      }
+    }
+
+    // Check Base64 starred links by domain first
+    for (const b64Url of base64StarredLinks) {
+      try {
+        const b64UrlObj = new URL(b64Url);
+        if (b64UrlObj.hostname === domain) return "starred";
+      } catch (e) {
+        continue;
+      }
+    }
+
+    // Check Base64 decoded links by domain
+    for (const b64Url of base64DecodedLinks) {
+      try {
+        const b64UrlObj = new URL(b64Url);
+        if (b64UrlObj.hostname === domain) return "safe";
       } catch (e) {
         continue;
       }
