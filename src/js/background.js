@@ -143,6 +143,7 @@ const notesMapping = {
   "liteapks.com": "liteapk-modyolo-note", "modyolo.com": "liteapk-modyolo-note",
   // Mobilism
   "mobilism.me": "mobilism-ranks", "mobilism.org": "mobilism-ranks",
+  "forum.mobilism.org": "mobilism-ranks", "forum.mobilism.me": "mobilism-ranks",
   // ModelScope
   "modelscope.cn": "modelscope",
   // Mori
@@ -158,7 +159,7 @@ const notesMapping = {
   // OpenRGB
   "openrgb.org": "openrgb-beta",
   // Pollinations AI
-  "pollinations.ai": "pollinations-limits",
+  "pollinations.ai": "pollinations-limits", "chat.pollinations.ai": "pollinations-limits",
   // Proton VPN
   "protonvpn.com": "proton-torrenting",
   // REAPER DAW
@@ -230,13 +231,21 @@ const notesMapping = {
 
 // Pattern-based matching for dynamic domains
 const notesPatterns = [
-  { pattern: /^1337x\./i, noteSlug: "1337x-ranks" },
-  { pattern: /^yts\./i, noteSlug: "yts-yify-note" },
-  { pattern: /^audiobookbay\./i, noteSlug: "audiobookbay-warning" },
-  { pattern: /^sanet\./i, noteSlug: "sanet-warning" },
-  { pattern: /^softarchive\./i, noteSlug: "softarchive-mirrors" },
-  { pattern: /^mobilism\./i, noteSlug: "mobilism-ranks" },
-  { pattern: /^rgshows\./i, noteSlug: "rgshows-autoplay" },
+  // Torrent sites with multiple TLDs
+  { pattern: /(?:^|\.)1337x\./i, noteSlug: "1337x-ranks" },
+  { pattern: /(?:^|\.)yts\./i, noteSlug: "yts-yify-note" },
+  { pattern: /(?:^|\.)audiobookbay\./i, noteSlug: "audiobookbay-warning" },
+  { pattern: /(?:^|\.)sanet\./i, noteSlug: "sanet-warning" },
+  { pattern: /(?:^|\.)softarchive\./i, noteSlug: "softarchive-mirrors" },
+  { pattern: /(?:^|\.)mobilism\./i, noteSlug: "mobilism-ranks" },
+  { pattern: /(?:^|\.)rgshows\./i, noteSlug: "rgshows-autoplay" },
+  // Sites with known subdomains
+  { pattern: /(?:^|\.)twitch\.tv$/i, noteSlug: "alt-twitch-player-extensions" },
+  { pattern: /(?:^|\.)huggingface\.co$/i, noteSlug: "hugging-face-warning" },
+  { pattern: /(?:^|\.)pollinations\.ai$/i, noteSlug: "pollinations-limits" },
+  { pattern: /(?:^|\.)4pda\./i, noteSlug: "captcha-4pda" },
+  // Archive mirrors
+  { pattern: /^archive\.(is|today|ph|fo|li|vn|md)$/i, noteSlug: "limit-bypass-note" },
 ];
 
 // Hardcoded site passwords - Maps domains to their passwords
@@ -270,7 +279,7 @@ function getNoteSlugForDomain(hostname) {
 // Get reason for an unsafe domain
 async function getReasonForDomain(hostname) {
   const domain = hostname.replace(/^www\./, "").toLowerCase();
-  
+
   // If in-memory unsafeReasons is empty, try loading from storage
   if (!unsafeReasons || Object.keys(unsafeReasons).length === 0) {
     try {
@@ -292,7 +301,7 @@ async function getReasonForDomain(hostname) {
       console.error("Error loading unsafeReasons:", e);
     }
   }
-  
+
   // Try exact match first
   if (unsafeReasons && unsafeReasons[domain]) return unsafeReasons[domain];
   // Try with www prefix

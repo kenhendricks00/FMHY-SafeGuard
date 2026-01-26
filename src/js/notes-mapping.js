@@ -88,6 +88,8 @@ const notesMapping = {
   // Mobilism
   "mobilism.me": "mobilism-ranks",
   "mobilism.org": "mobilism-ranks",
+  "forum.mobilism.org": "mobilism-ranks",
+  "forum.mobilism.me": "mobilism-ranks",
 
   // ModelScope
   "modelscope.cn": "modelscope",
@@ -115,6 +117,7 @@ const notesMapping = {
 
   // Pollinations AI
   "pollinations.ai": "pollinations-limits",
+  "chat.pollinations.ai": "pollinations-limits",
 
   // Proton VPN (torrenting)
   "protonvpn.com": "proton-torrenting",
@@ -294,13 +297,21 @@ const notesMapping = {
 
 // Pattern-based matching for dynamic domains
 const notesPatterns = [
-  { pattern: /^1337x\./i, noteSlug: "1337x-ranks" },
-  { pattern: /^yts\./i, noteSlug: "yts-yify-note" },
-  { pattern: /^audiobookbay\./i, noteSlug: "audiobookbay-warning" },
-  { pattern: /^sanet\./i, noteSlug: "sanet-warning" },
-  { pattern: /^softarchive\./i, noteSlug: "softarchive-mirrors" },
-  { pattern: /^mobilism\./i, noteSlug: "mobilism-ranks" },
-  { pattern: /^rgshows\./i, noteSlug: "rgshows-autoplay" },
+  // Torrent sites with multiple TLDs
+  { pattern: /(?:^|\.)1337x\./i, noteSlug: "1337x-ranks" },
+  { pattern: /(?:^|\.)yts\./i, noteSlug: "yts-yify-note" },
+  { pattern: /(?:^|\.)audiobookbay\./i, noteSlug: "audiobookbay-warning" },
+  { pattern: /(?:^|\.)sanet\./i, noteSlug: "sanet-warning" },
+  { pattern: /(?:^|\.)softarchive\./i, noteSlug: "softarchive-mirrors" },
+  { pattern: /(?:^|\.)mobilism\./i, noteSlug: "mobilism-ranks" },
+  { pattern: /(?:^|\.)rgshows\./i, noteSlug: "rgshows-autoplay" },
+  // Sites with known subdomains
+  { pattern: /(?:^|\.)twitch\.tv$/i, noteSlug: "alt-twitch-player-extensions" },
+  { pattern: /(?:^|\.)huggingface\.co$/i, noteSlug: "hugging-face-warning" },
+  { pattern: /(?:^|\.)pollinations\.ai$/i, noteSlug: "pollinations-limits" },
+  { pattern: /(?:^|\.)4pda\./i, noteSlug: "captcha-4pda" },
+  // Archive mirrors
+  { pattern: /^archive\.(is|today|ph|fo|li|vn|md)$/i, noteSlug: "limit-bypass-note" },
 ];
 
 // Function to get note slug for a domain
