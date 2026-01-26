@@ -8,6 +8,7 @@
     - Scraped 48 additional URLs from pastebin links (actual site URLs behind the Base64 encoding).  
     - Starred sites (GenP, MAS, Myrient, MakeMKV, Firehawk52, Vadapav) now correctly show "starred" status.  
     - Other wiki-listed sites show "safe" status (Dyren Repacks, Jetbrains guide, etc.).  
+    - Links stored as Base64 encoded in source code and decoded at runtime for obfuscation.  
 
 #### **🐞 Bug Fixes**
 - **`Fixed FMHY Sites Only Match Exact URLs`**  
@@ -128,3 +129,4 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
+
