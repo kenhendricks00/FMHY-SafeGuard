@@ -260,10 +260,22 @@ const sitePasswords = {
   "soft98.ir": "soft98.ir",
 };
 
+// Hardcoded site invite codes - Maps domains to their invite codes
+const siteInviteCodes = {
+  "ee3.me": "mpgh",
+  "rips.cc": "mpgh",
+};
+
 // Get password for a domain
 function getPasswordForDomain(hostname) {
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   return sitePasswords[domain] || null;
+}
+
+// Get invite code for a domain
+function getInviteCodeForDomain(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  return siteInviteCodes[domain] || null;
 }
 
 // Get note slug for a domain
@@ -927,10 +939,13 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Get password if available
         const password = getPasswordForDomain(domain);
 
+        // Get invite code if available
+        const inviteCode = getInviteCodeForDomain(domain);
+
         console.log(
           `getSiteStatus result for ${url}: ${status}, matched: ${matchedUrl}`
         );
-        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason, password: password });
+        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason, password: password, inviteCode: inviteCode });
       } catch (error) {
         console.error("Error in getSiteStatus handler:", error);
         sendResponse({
