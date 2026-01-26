@@ -182,6 +182,67 @@
       transform: scale(1.1);
     }
 
+    /* Password Section Styles */
+    #password-container {
+      margin-top: 15px;
+      padding: 10px;
+      background: var(--hover-bg);
+      border-radius: 8px;
+      text-align: left;
+      display: none;
+    }
+
+    #password-container.visible {
+      display: block;
+    }
+
+    #password-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4ecdc4;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #password-title svg {
+      stroke: #4ecdc4;
+    }
+
+    #password-content {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: monospace;
+      color: var(--text-color);
+      background: var(--bg-color);
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    #password-content:hover {
+      background: var(--hover-bg);
+    }
+
+    #password-content .copy-icon {
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    #password-content:hover .copy-icon {
+      opacity: 1;
+    }
+
+    #password-content.copied {
+      background: #4ecdc4;
+      color: #000;
+    }
+
     /* Reason Section Styles */
     #reason-container {
       margin-top: 15px;
@@ -286,6 +347,13 @@
       border-radius: 3px;
       font-size: 11px;
     }
+
+    #note-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin: 8px 0;
+    }
   </style>
 </head>
 
@@ -306,6 +374,22 @@
     <p id="status-message" data-i18n="checkingSiteStatus">Checking site status...</p>
   </div>
   <p id="error-message"></p>
+  <div id="password-container">
+    <div id="password-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <span>Password</span>
+    </div>
+    <div id="password-content">
+      <span id="password-text"></span>
+      <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+      </svg>
+    </div>
+  </div>
   <div id="reason-container">
     <div id="reason-title">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

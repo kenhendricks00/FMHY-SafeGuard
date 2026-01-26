@@ -50,7 +50,9 @@ const notesBaseURL =
 
 // State Variables
 let unsafeSitesRegex = null;
+let unsafeHostnamesRegex = null; // Domain-only regex for unsafe sites
 let potentiallyUnsafeSitesRegex = null;
+let potentiallyUnsafeHostnamesRegex = null; // Domain-only regex for potentially unsafe sites
 let fmhySitesRegex = null;
 let fmhyHostnamesRegex = null; // Domain-only regex for FMHY sites
 let safeSites = [];
@@ -108,7 +110,7 @@ const notesMapping = {
   // Crystal Disk Info
   "crystalmark.info": "crystaldiskinfo",
   // CS.RIN.RU
-  "cs.rin.ru": "csrin-search",
+  "cs.rin.ru": "csrin-search", "csrin.org": "csrin-search",
   // DODI Repacks
   "dodi-repacks.site": "dodi-warning",
   // FileBin
@@ -236,6 +238,24 @@ const notesPatterns = [
   { pattern: /^mobilism\./i, noteSlug: "mobilism-ranks" },
   { pattern: /^rgshows\./i, noteSlug: "rgshows-autoplay" },
 ];
+
+// Hardcoded site passwords - Maps domains to their passwords
+const sitePasswords = {
+  "cs.rin.ru": "cs.rin.ru",
+  "csrin.org": "csrin.org",
+  "online-fix.me": "online-fix.me",
+  "ovagames.com": "www.ovagames.com",
+  "g4u.to": "404",
+  "elenemigos.com": "elenemigos.com",
+  "triahgames.com": "www.triahgames.com",
+  "soft98.ir": "soft98.ir",
+};
+
+// Get password for a domain
+function getPasswordForDomain(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  return sitePasswords[domain] || null;
+}
 
 // Get note slug for a domain
 function getNoteSlugForDomain(hostname) {
@@ -442,6 +462,9 @@ async function fetchFilterLists() {
       const unsafeText = await unsafeResponse.text();
       unsafeSites = extractUrlsFromFilterList(unsafeText);
       unsafeSitesRegex = generateRegexFromList(unsafeSites);
+      // Also generate hostname-only regex for domain-level matching
+      const unsafeHostnames = extractHostnamesFromUrls(unsafeSites);
+      unsafeHostnamesRegex = generateRegexFromList(unsafeHostnames);
     }
 
     if (potentiallyUnsafeResponse.ok) {
@@ -450,6 +473,9 @@ async function fetchFilterLists() {
       potentiallyUnsafeSitesRegex = generateRegexFromList(
         potentiallyUnsafeSites
       );
+      // Also generate hostname-only regex for domain-level matching
+      const potentiallyUnsafeHostnames = extractHostnamesFromUrls(potentiallyUnsafeSites);
+      potentiallyUnsafeHostnamesRegex = generateRegexFromList(potentiallyUnsafeHostnames);
     }
 
     if (fmhyResponse.ok) {
@@ -839,11 +865,11 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (status === "no_data" && !isRepoSite) {
           console.log(`No match for full URL, trying domain: ${domain}`);
 
-          // Check domain against regex patterns
-          if (unsafeSitesRegex?.test(domain)) {
+          // Check domain against regex patterns (use hostname-only regex for domain matching)
+          if (unsafeHostnamesRegex?.test(domain)) {
             status = "unsafe";
             matchedUrl = `https://${domain}`;
-          } else if (potentiallyUnsafeSitesRegex?.test(domain)) {
+          } else if (potentiallyUnsafeHostnamesRegex?.test(domain)) {
             status = "potentially_unsafe";
             matchedUrl = `https://${domain}`;
           } else if (fmhyHostnamesRegex?.test(domain)) {
@@ -889,10 +915,13 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           reason = await getReasonForDomain(domain);
         }
 
+        // Get password if available
+        const password = getPasswordForDomain(domain);
+
         console.log(
           `getSiteStatus result for ${url}: ${status}, matched: ${matchedUrl}`
         );
-        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason });
+        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason, password: password });
       } catch (error) {
         console.error("Error in getSiteStatus handler:", error);
         sendResponse({
@@ -978,9 +1007,9 @@ function getStatusFromLists(url) {
     if (starredSites.includes(url)) return "starred";
     if (safeSites.includes(url)) return "safe";
 
-    // Then check domain-level
-    if (unsafeSitesRegex?.test(domain)) return "unsafe";
-    if (potentiallyUnsafeSitesRegex?.test(domain)) return "potentially_unsafe";
+    // Then check domain-level (use hostname-only regex for domain matching)
+    if (unsafeHostnamesRegex?.test(domain)) return "unsafe";
+    if (potentiallyUnsafeHostnamesRegex?.test(domain)) return "potentially_unsafe";
     if (fmhyHostnamesRegex?.test(domain)) return "fmhy";
 
     // Try domain-level checks for starred and safe
@@ -1148,6 +1177,9 @@ async function initializeExtension() {
 
         if (storedData.unsafeSites && storedData.unsafeSites.length > 0) {
           unsafeSitesRegex = generateRegexFromList(storedData.unsafeSites);
+          // Also generate hostname-only regex for domain-level matching
+          const unsafeHostnames = extractHostnamesFromUrls(storedData.unsafeSites);
+          unsafeHostnamesRegex = generateRegexFromList(unsafeHostnames);
         }
 
         if (
@@ -1157,6 +1189,9 @@ async function initializeExtension() {
           potentiallyUnsafeSitesRegex = generateRegexFromList(
             storedData.potentiallyUnsafeSites
           );
+          // Also generate hostname-only regex for domain-level matching
+          const potentiallyUnsafeHostnames = extractHostnamesFromUrls(storedData.potentiallyUnsafeSites);
+          potentiallyUnsafeHostnamesRegex = generateRegexFromList(potentiallyUnsafeHostnames);
         }
 
         if (storedData.fmhySites && storedData.fmhySites.length > 0) {

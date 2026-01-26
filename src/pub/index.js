@@ -56,11 +56,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   function parseMarkdown(md) {
     if (!md) return "";
 
+    // Store images to protect from URL linking
+    const imgTags = [];
+    
     let result = md
       // Remove the main header (#### Title) since we show "FMHY Note" already
       .replace(/^#{1,4}\s+.*$/gm, '')
       // Trim leading/trailing whitespace
-      .trim()
+      .trim();
+    
+    // Protect HTML img tags from URL linking
+    result = result.replace(/<img[^>]*>/gi, (match) => {
+      imgTags.push(match);
+      return `[[HTMLIMG_${imgTags.length - 1}]]`;
+    });
+    
+    // Convert markdown images ![alt](url) to placeholder
+    result = result.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+      imgTags.push(`<img src="${url}" alt="${alt}" />`);
+      return `[[HTMLIMG_${imgTags.length - 1}]]`;
+    });
+    
+    result = result
       // Bold (must come before italic)
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       // Italic
@@ -68,11 +85,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Markdown links [text](url) - use placeholder to avoid double-linking
       .replace(/\[(.*?)\]\((.*?)\)/g, '[[LINK:$2:$1]]');
     
-    // Raw URLs (convert before restoring markdown links)
+    // Raw URLs (convert before restoring markdown links and images)
     result = result.replace(/(https?:\/\/[^\s<>\)\]]+)/g, '<a href="$1" target="_blank">$1</a>');
     
     // Restore markdown links from placeholders
     result = result.replace(/\[\[LINK:(.*?):(.*?)\]\]/g, '<a href="$1" target="_blank">$2</a>');
+    
+    // Restore images from placeholders
+    result = result.replace(/\[\[HTMLIMG_(\d+)\]\]/g, (match, index) => imgTags[parseInt(index)]);
 
     result = result
       // Code
@@ -287,7 +307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       // Update the popup with the result
-      handleStatusUpdate(response.status, displayUrl, response.reason);
+      handleStatusUpdate(response.status, displayUrl, response.reason, response.password);
     } catch (error) {
       console.error("Error checking site status:", error);
       errorMessage.textContent = `Error: ${error.message}`;
@@ -295,7 +315,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function handleStatusUpdate(status, displayUrl, reason) {
+  function handleStatusUpdate(status, displayUrl, reason, password) {
     let message;
 
     // Handle reason display in dedicated container
@@ -307,6 +327,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       reasonContainer.classList.add("visible");
     } else {
       reasonContainer.classList.remove("visible");
+    }
+
+    // Handle password display
+    const passwordContainer = document.getElementById("password-container");
+    const passwordText = document.getElementById("password-text");
+    const passwordContent = document.getElementById("password-content");
+    if (password && passwordContainer && passwordText) {
+      passwordText.textContent = password;
+      passwordContainer.classList.add("visible");
+      // Add click-to-copy functionality
+      passwordContent.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(password);
+          passwordContent.classList.add("copied");
+          setTimeout(() => passwordContent.classList.remove("copied"), 1000);
+        } catch (err) {
+          console.error("Failed to copy password:", err);
+        }
+      };
+    } else if (passwordContainer) {
+      passwordContainer.classList.remove("visible");
     }
 
     // Use i18n for status messages if available
