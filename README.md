@@ -55,6 +55,7 @@
 - **Search Engine-Focused Highlighting**: Seamlessly highlights links on search engines with colors and icons, instantly showing if a site is safe, unsafe, or potentially dangerous.
 - **FMHY Notes**: View relevant notes from the FMHY wiki when visiting mapped websites with 80+ domain mappings.
 - **Unsafe Site Reasons**: See exactly why a site is flagged as unsafe with detailed reasons and clickable evidence links.
+- **Site Passwords & Invite Codes**: Automatically displays passwords or invite codes for sites that require them, with easy click-to-copy functionality.
 - **Multi-Language Support**: Available in 7 languages: English, Spanish, Russian, German, Portuguese, French, and Japanese.
 - **Theme Options**: Beautiful dark, light, and AMOLED themes with system preference detection.
 
