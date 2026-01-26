@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.4 (UNRELEASED)
+## v1.3.4 (01/26/2026)
 
 #### **🚀 New Features**
 - **`Base64 Links Support`**  
@@ -129,4 +129,5 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
+
 
