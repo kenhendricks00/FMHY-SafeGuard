@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.3.4 (UNRELEASED)
+
+#### **🚀 New Features**
+- **`Base64 Links Support`**  
+    - Added support for 113 decoded Base64 links from rentry.co/FMHYB64.  
+    - Scraped 48 additional URLs from pastebin links (actual site URLs behind the Base64 encoding).  
+    - Starred sites (GenP, MAS, Myrient, MakeMKV, Firehawk52, Vadapav) now correctly show "starred" status.  
+    - Other wiki-listed sites show "safe" status (Dyren Repacks, Jetbrains guide, etc.).  
+
+#### **🐞 Bug Fixes**
+- **`Fixed FMHY Sites Only Match Exact URLs`**  
+    - FMHY-related sites now only match exact URLs from the filterlist, not entire domains.  
+    - Fixes `rentry.co`, `reddit.com`, `bsky.app` incorrectly showing as "FMHY related".  
+    - Only specific URLs like `rentry.co/FMHY` or `reddit.com/r/FREEMEDIAHECKYEAH` will match.  
+
+---
+
 ## v1.3.3 (01/25/2026)
 
 #### **🔧 Enhancements**
@@ -111,4 +128,3 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
-
