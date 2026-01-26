@@ -6,6 +6,9 @@
 - **`Site Password Display`**  
     - Popup now shows passwords for sites that require them (CS.RIN, Online-Fix, Ova Games, G4U, ElEnemigos, TriahGames, Soft98).  
     - Password is displayed in a dedicated section with easy copy functionality.  
+- **`Site Invite Code Display`**  
+    - Popup now shows invite codes for sites that require them (EE3, RIPS).  
+    - Invite code is displayed in a dedicated section with easy copy functionality.  
 
 #### **🐞 Bug Fixes**
 - **`Fixed Domain-Level Site Detection`**  
