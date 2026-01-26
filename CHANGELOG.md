@@ -2,10 +2,19 @@
 
 ## v1.3.3 (UNRELEASED)
 
+#### **🔧 Enhancements**
+- **`Site Password Display`**  
+    - Popup now shows passwords for sites that require them (CS.RIN, Online-Fix, Ova Games, G4U, ElEnemigos, TriahGames, Soft98).  
+    - Password is displayed in a dedicated section with easy copy functionality.  
+
 #### **🐞 Bug Fixes**
-- **`Fixed FMHY Site Detection`**  
-    - Sites in `fmhy-filterlist.txt` now correctly show as "FMHY" status instead of just "safe".  
-    - Added domain-level matching for FMHY sites using hostname extraction.  
+- **`Fixed Domain-Level Site Detection`**  
+    - Sites in filterlists now correctly detected using domain-level matching.  
+    - Added hostname extraction for unsafe, potentially unsafe, and FMHY sites.  
+    - Fixes sites showing incorrect status when URL path didn't match exactly.  
+- **`Fixed FMHY Note Image Rendering`**  
+    - Images in FMHY Notes now render properly instead of showing raw URLs.  
+    - Both markdown and HTML image formats are supported.  
 
 ---
 
