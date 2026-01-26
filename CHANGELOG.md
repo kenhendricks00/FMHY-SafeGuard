@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.3 (UNRELEASED)
+## v1.3.3 (01/25/2026)
 
 #### **🔧 Enhancements**
 - **`Site Password Display`**  
@@ -111,3 +111,4 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
+
