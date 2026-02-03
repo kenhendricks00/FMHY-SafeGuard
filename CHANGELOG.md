@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.5 (02/03/2026)
+
+#### **🚀 New Features**
+- **`Domain Management`**  
+    - Users can now add custom trusted/untrusted domains via Settings.  
+    - User-defined domains take highest priority over FMHY filterlists.  
+    - Domains in "Safe Domains" show green toolbar icon and skip warnings.  
+    - Domains in "Unsafe Domains" show red toolbar icon and trigger warning page.  
+    - Changes apply instantly without needing to reload the extension.  
+
+---
+
 ## v1.3.4 (01/26/2026)
 
 #### **🚀 New Features**
@@ -129,5 +141,3 @@
     - `index.js` – Added markdown parser, note fetching logic, and reason display with clickable links.  
     - `warning-page.html` – Added CSS for clickable links in reason text.  
     - `warning-page.js` – Added URL-to-link conversion for reason display.
-
-
