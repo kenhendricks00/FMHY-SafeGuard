@@ -60,6 +60,8 @@ let starredSites = [];
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
 const notesCache = new Map(); // Cache for fetched notes
+let userTrustedDomains = new Set(); // User-defined trusted domains
+let userUntrustedDomains = new Set(); // User-defined untrusted domains
 
 // Base64 Starred Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
 const base64StarredLinksEncoded = [
@@ -1232,6 +1234,15 @@ function getStatusFromLists(url) {
     // Special handling for repository hosting sites
     const urlObj = new URL(url);
     const domain = urlObj.hostname;
+    const normalizedDomain = domain.replace(/^www\./, "").toLowerCase();
+
+    // Check user-defined domains first (highest priority)
+    if (userTrustedDomains.has(normalizedDomain)) {
+      return "safe";
+    }
+    if (userUntrustedDomains.has(normalizedDomain)) {
+      return "unsafe";
+    }
     const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
       (domain) =>
         urlObj.hostname === domain || urlObj.hostname.endsWith("." + domain)
@@ -1425,14 +1436,44 @@ async function initializeSettings() {
   console.log("Settings initialized:", mergedSettings);
 }
 
+// Load user-defined trusted/untrusted domains from storage
+async function loadUserDomains() {
+  try {
+    const { userTrustedDomains: trusted, userUntrustedDomains: untrusted } =
+      await browserAPI.storage.local.get(["userTrustedDomains", "userUntrustedDomains"]);
+
+    if (trusted && Array.isArray(trusted)) {
+      userTrustedDomains = new Set(trusted.map(d => d.toLowerCase().replace(/^www\./, "")));
+      console.log(`Loaded ${userTrustedDomains.size} user trusted domains`);
+    }
+
+    if (untrusted && Array.isArray(untrusted)) {
+      userUntrustedDomains = new Set(untrusted.map(d => d.toLowerCase().replace(/^www\./, "")));
+      console.log(`Loaded ${userUntrustedDomains.size} user untrusted domains`);
+    }
+  } catch (error) {
+    console.error("Error loading user domains:", error);
+  }
+}
+
+// Listen for storage changes to update user domains
+browserAPI.storage.onChanged.addListener((changes, area) => {
+  if (area === "local") {
+    if (changes.userTrustedDomains || changes.userUntrustedDomains) {
+      loadUserDomains().then(() => {
+        console.log("User domains reloaded after settings change");
+      });
+    }
+  }
+});
+
 // Extension initialization
 async function initializeExtension() {
   console.log("Initializing extension...");
 
   try {
     await initializeSettings();
-
-    // Check if we need to update
+    await loadUserDomains();
     if (await shouldUpdate()) {
       await fetchFilterLists();
       await fetchSafeSites();
