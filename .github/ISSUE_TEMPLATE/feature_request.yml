@@ -6,6 +6,11 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## Before You Submit
+        > ⚠️ **Wrong repo?** If your request is about **adding or removing a site** from
+        > the safe/unsafe list, that data comes from the **FMHY Wiki** — please open
+        > your issue [there](https://github.com/fmhy/FMHY/issues) instead.
+
         Thank you for taking the time to suggest a new feature!
   - type: textarea
     id: problem-related
