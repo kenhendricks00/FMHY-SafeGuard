@@ -6,6 +6,11 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## Before You Submit
+        > ⚠️ **Wrong repo?** If your report is about a **site being incorrectly flagged
+        > or missing from the safe/unsafe list**, that data comes from the **FMHY Wiki** —
+        > please open your issue [there](https://github.com/fmhy/FMHY/issues) instead.
+
         Thank you for creating a bug report to help us improve!
   - type: textarea
     id: bug-description
