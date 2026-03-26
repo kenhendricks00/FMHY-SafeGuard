@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.3.6 (03/26/2026)
+
+#### **🚀 New Features**
+- **`FMHY Backup Mirrors Support`**  
+    - Added support for FMHY backup mirrors, including `fmhy.vercel.app` and `fmhy.pages.dev`.
+- **`Kagi Search Link Highlighting`**  
+    - Added support for highlighting FMHY-related links in Kagi search results.
+
+#### **🐞 Bug Fixes**
+- **`Fixed Warning Page Redirect URL Handling`**  
+    - Resolved warning page redirect issues caused by URL parameter mismatches.
+- **`Fixed FMHY Note Link Formatting in Popup`**  
+    - Corrected FMHY note link formatting in the popup for cleaner rendering.
+
+---
+
 ## v1.3.5 (02/03/2026)
 
 #### **🚀 New Features**
