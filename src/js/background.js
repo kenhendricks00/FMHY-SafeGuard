@@ -237,6 +237,7 @@ const searchEngines = [
   "google.com",
   "bing.com",
   "duckduckgo.com",
+  "kagi.com",
   "librey.org",
   "4get.ca",
   "mojeek.com",
@@ -909,8 +910,10 @@ function checkSiteAndUpdatePageAction(tabId, url) {
   updatePageAction(status, tabId);
 
   // Handle unsafe sites that need warning page redirection if not approved
-  if (status === "unsafe" && !approvedUrls.get(tabId)?.includes(rootUrl)) {
-    openWarningPage(tabId, rootUrl);
+  const tabApprovedUrls = approvedUrls.get(tabId) || [];
+  const isApproved = tabApprovedUrls.includes(normalizedUrl) || tabApprovedUrls.includes(rootUrl);
+  if (status === "unsafe" && !isApproved) {
+    openWarningPage(tabId, url);
   }
 }
 
