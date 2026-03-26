@@ -7,6 +7,8 @@
     - Added support for FMHY backup mirrors, including `fmhy.vercel.app` and `fmhy.pages.dev`.
 - **`Kagi Search Link Highlighting`**  
     - Added support for highlighting FMHY-related links in Kagi search results.
+- **`Extension Context Menu Shortcut to FMHY.net`**  
+    - Added a right-click browser action shortcut (`Open FMHY.net`) for quick access to the FMHY homepage.
 
 #### **🐞 Bug Fixes**
 - **`Fixed Warning Page Redirect URL Handling`**  
