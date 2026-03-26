@@ -13,6 +13,9 @@
     - Resolved warning page redirect issues caused by URL parameter mismatches.
 - **`Fixed FMHY Note Link Formatting in Popup`**  
     - Corrected FMHY note link formatting in the popup for cleaner rendering.
+- **`Fixed Website Link Visibility in Dark Mode`**  
+    - Updated docs site content-link styling so links no longer blend into dark theme backgrounds.  
+    - Added clearer underline/focus treatment for better readability and accessibility.
 
 ---
 
