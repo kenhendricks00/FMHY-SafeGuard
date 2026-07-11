@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.3.7 (07/10/2026)
+
+#### **🚀 New Features**
+- **`View Resources on FMHY`**
+    - Added a localized **View on FMHY** link for recognized safe and starred resources.
+    - Links open the exact FMHY guide section containing the matched resource.
+    - The matching guide line is centered and highlighted using FMHY's native search-result styling.
+    - Added automatic handling for FMHY's asynchronously rendered guide content.
+
+#### **🔧 Enhancements**
+- **`Improved Starred Resource Discovery`**
+    - Starred guide lines now collect every bold resource instead of only the first URL.
+    - FMHY guide locations are cached alongside site lists and rebuilt automatically when stale.
+- **`Browser Test Builds`**
+    - Added ready-to-load unpacked test folders for Chrome/Chromium and Firefox.
+
+#### **🐞 Bug Fixes**
+- **`Fixed Settings Refresh Crash`**
+    - Fixed content-script processing stopping after settings changes due to reassignment of a constant link tracker.
+- **`Fixed 4get Image Viewer Conflict`**
+    - Replaced the generic processed-link class with an extension-owned data attribute to avoid site CSS and JavaScript collisions.
+- **`Fixed Disabled Warning Page Setting`**
+    - Warning redirects now read the same local `showWarning` setting saved by the options page.
+- **`Fixed FMHY Section Anchors`**
+    - Removed invalid leading hyphens from generated anchors such as `#-subreddit-discovery`.
+    - Existing cached mappings with legacy anchors are detected and refreshed automatically.
+- **`Fixed Delayed FMHY Result Highlighting`**
+    - The FMHY helper now waits for the matching guide line to render, so highlighting appears without another extension interaction.
+
+---
+
 ## v1.3.6 (03/26/2026)
 
 #### **🚀 New Features**
