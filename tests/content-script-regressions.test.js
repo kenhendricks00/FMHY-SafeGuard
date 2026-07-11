@@ -12,6 +12,23 @@ const backgroundScript = fs.readFileSync(
   "utf8",
 );
 
+function loadFunction(source, name) {
+  const start = source.indexOf(`function ${name}(`);
+  assert.notEqual(start, -1, `${name} should be defined`);
+
+  const bodyStart = source.indexOf("{", start);
+  let depth = 0;
+  for (let index = bodyStart; index < source.length; index += 1) {
+    if (source[index] === "{") depth += 1;
+    if (source[index] === "}") depth -= 1;
+    if (depth === 0) {
+      return Function(`return (${source.slice(start, index + 1)})`)();
+    }
+  }
+
+  throw new Error(`Could not read ${name}`);
+}
+
 test("processed link tracking can be reset after settings change", () => {
   assert.match(contentScript, /let processedLinks = new WeakSet\(\);/);
   assert.match(contentScript, /processedLinks = new WeakSet\(\);/);
@@ -36,4 +53,18 @@ test("warning redirects honor the setting saved by the options page", () => {
   );
   assert.match(backgroundScript, /if \(!showWarning\)/);
   assert.doesNotMatch(backgroundScript, /storage\.sync\.get\(\{\s*warningPage:/);
+});
+
+test("all bold links on a starred guide line are treated as starred", () => {
+  const extractStarredUrlsFromMarkdown = loadFunction(
+    backgroundScript,
+    "extractStarredUrlsFromMarkdown",
+  );
+  const markdown =
+    "* ⭐ **[First](https://first.example/)** or **[Second](https://second.example/)** / [Related](https://related.example/)";
+
+  assert.deepEqual(extractStarredUrlsFromMarkdown(markdown), [
+    "https://first.example/",
+    "https://second.example/",
+  ]);
 });

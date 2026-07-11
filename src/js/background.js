@@ -553,6 +553,24 @@ function extractUrlsFromMarkdown(markdown) {
   return markdown.match(urlRegex) || [];
 }
 
+function extractStarredUrlsFromMarkdown(markdown) {
+  const starredUrls = [];
+
+  for (const line of markdown.split("\n")) {
+    if (!line.includes("⭐")) continue;
+
+    const boldSections = line.match(/\*\*.*?\*\*/g) || [];
+    for (const section of boldSections) {
+      const links = section.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g);
+      for (const match of links) {
+        starredUrls.push(match[1]);
+      }
+    }
+  }
+
+  return starredUrls;
+}
+
 function extractUrlsFromBookmarks(html) {
   console.log("Extracting URLs from bookmarks HTML...");
 
@@ -805,13 +823,7 @@ async function fetchStarredSites() {
         continue;
       }
       const markdown = await response.text();
-      markdown.split("\n").forEach((line) => {
-        if (line.includes("⭐")) {
-          // reuse your existing URL regex logic:
-          const match = line.match(/https?:\/\/[^\s)]+/);
-          if (match) starredUrls.push(match[0].trim());
-        }
-      });
+      starredUrls.push(...extractStarredUrlsFromMarkdown(markdown));
     }
 
     // Normalize, dedupe and store
