@@ -122,6 +122,8 @@ test("opening an FMHY resource highlights its matching guide line", () => {
   assert.match(popupScript, /pendingFmhyHighlight/);
   assert.match(fmhyHighlightScript, /vp-search-highlight-target/);
   assert.match(fmhyHighlightScript, /closest\("li, p"\)/);
+  assert.match(fmhyHighlightScript, /waitForMatchingResult/);
+  assert.match(fmhyHighlightScript, /MutationObserver/);
   assert.match(chromiumManifest, /js\/fmhy-highlight\.js/);
   assert.match(firefoxManifest, /js\/fmhy-highlight\.js/);
 });

@@ -12,6 +12,35 @@ function normalizeResourceUrl(value) {
   }
 }
 
+function findMatchingResult(targetUrl) {
+  const matchingLink = Array.from(
+    document.querySelectorAll(".vp-doc a[href]")
+  ).find((link) => normalizeResourceUrl(link.href) === targetUrl);
+  return matchingLink?.closest("li, p") || null;
+}
+
+function waitForMatchingResult(targetUrl, timeoutMs = 10000) {
+  const existingResult = findMatchingResult(targetUrl);
+  if (existingResult) return Promise.resolve(existingResult);
+
+  return new Promise((resolve) => {
+    let timeoutId;
+    const observer = new MutationObserver(() => {
+      const resultLine = findMatchingResult(targetUrl);
+      if (!resultLine) return;
+      observer.disconnect();
+      clearTimeout(timeoutId);
+      resolve(resultLine);
+    });
+
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    timeoutId = setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, timeoutMs);
+  });
+}
+
 async function highlightPendingResource() {
   const { pendingFmhyHighlight } = await browserAPI.storage.local.get(
     "pendingFmhyHighlight"
@@ -23,10 +52,7 @@ async function highlightPendingResource() {
   if (!isFresh || currentPage !== pendingFmhyHighlight.fmhyUrl) return;
 
   const targetUrl = normalizeResourceUrl(pendingFmhyHighlight.resourceUrl);
-  const matchingLink = Array.from(document.querySelectorAll(".vp-doc a[href]")).find(
-    (link) => normalizeResourceUrl(link.href) === targetUrl
-  );
-  const resultLine = matchingLink?.closest("li, p");
+  const resultLine = await waitForMatchingResult(targetUrl);
   if (!resultLine) return;
 
   await browserAPI.storage.local.remove("pendingFmhyHighlight");
