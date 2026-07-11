@@ -5,6 +5,16 @@ on:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      target:
+        description: Store submission to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - chrome
+          - firefox
 
 permissions:
   contents: write
@@ -97,6 +107,7 @@ jobs:
 
   publish-chrome:
     needs: release
+    if: github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'chrome'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -109,16 +120,15 @@ jobs:
           path: dist
 
       - name: Authenticate to Google Cloud
-        id: google-auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.CWS_SERVICE_ACCOUNT_JSON }}
-          token_format: access_token
-          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Upload and publish Chrome extension
         env:
-          ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
           EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
           PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
           VERSION: ${{ needs.release.outputs.version }}
@@ -127,6 +137,8 @@ jobs:
           set -euo pipefail
           test -n "$EXTENSION_ID"
           test -n "$PUBLISHER_ID"
+          ACCESS_TOKEN=$(gcloud auth print-access-token \
+            --scopes=https://www.googleapis.com/auth/chromewebstore)
           PACKAGE="dist/FMHY-SafeGuard_v${VERSION}.chromium.zip"
           BASE="https://chromewebstore.googleapis.com"
 
@@ -143,6 +155,7 @@ jobs:
 
   submit-firefox:
     needs: release
+    if: github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'firefox'
     runs-on: ubuntu-latest
     permissions:
       contents: read
