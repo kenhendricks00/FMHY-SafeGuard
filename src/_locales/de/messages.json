@@ -373,6 +373,10 @@
     "message": "Filterliste erfolgreich aktualisiert!",
     "description": "Filterlist update success message"
   },
+  "viewOnFmhy": {
+    "message": "Auf FMHY ansehen →",
+    "description": "Link zum passenden Ressourcenabschnitt auf FMHY"
+  },
   "updateFailed": {
     "message": "Aktualisierung fehlgeschlagen. Bitte erneut versuchen.",
     "description": "Filterlist update failed message"

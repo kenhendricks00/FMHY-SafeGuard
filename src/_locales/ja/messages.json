@@ -373,6 +373,10 @@
     "message": "フィルターリストが正常に更新されました！",
     "description": "Filterlist update success message"
   },
+  "viewOnFmhy": {
+    "message": "FMHYで見る →",
+    "description": "FMHYの該当リソースセクションへのリンク"
+  },
   "updateFailed": {
     "message": "更新に失敗しました。もう一度お試しください。",
     "description": "Filterlist update failed message"

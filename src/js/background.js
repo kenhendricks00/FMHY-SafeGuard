@@ -91,6 +91,7 @@ let fmhySitesRegex = null;
 let fmhyHostnamesRegex = null; // Domain-only regex for FMHY sites
 let safeSites = [];
 let starredSites = [];
+let fmhyResourceMap = {};
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
 const notesCache = new Map(); // Cache for fetched notes
@@ -571,6 +572,38 @@ function extractStarredUrlsFromMarkdown(markdown) {
   return starredUrls;
 }
 
+function extractFmhyResourceMap(markdown, guideUrl) {
+  const resourceMap = {};
+  let sectionUrl = guideUrl;
+
+  for (const line of markdown.split("\n")) {
+    const heading = line.match(/^#{2,3}\s+(.+?)\s*$/);
+    if (heading) {
+      const anchor = heading[1]
+        .replace(/<[^>]+>/g, "")
+        .replace(/[*_`]/g, "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s-]/gu, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+      sectionUrl = anchor ? `${guideUrl}#${anchor}` : guideUrl;
+    }
+
+    for (const match of line.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g)) {
+      resourceMap[match[1]] = sectionUrl;
+    }
+  }
+
+  return resourceMap;
+}
+
+function getFmhyUrlForMatch(matchedUrl) {
+  const normalizedUrl = normalizeUrl(matchedUrl);
+  if (!normalizedUrl) return null;
+  return fmhyResourceMap[normalizedUrl] || null;
+}
+
 function extractUrlsFromBookmarks(html) {
   console.log("Extracting URLs from bookmarks HTML...");
 
@@ -782,11 +815,23 @@ async function fetchSafeSites() {
 
     // Extract URLs from each markdown document
     let allUrls = [];
-    for (const response of responses) {
+    fmhyResourceMap = {};
+    for (let index = 0; index < responses.length; index++) {
+      const response = responses[index];
       if (response.ok) {
         const markdown = await response.text();
         const urls = extractUrlsFromMarkdown(markdown);
         allUrls = allUrls.concat(urls);
+        const guideName = new URL(safeListURLs[index]).pathname
+          .split("/")
+          .pop()
+          .replace(/\.md$/, "");
+        const guideUrl = `https://fmhy.net/${guideName}`;
+        const guideMap = extractFmhyResourceMap(markdown, guideUrl);
+        for (const [resourceUrl, fmhyUrl] of Object.entries(guideMap)) {
+          const normalizedResourceUrl = normalizeUrl(resourceUrl);
+          if (normalizedResourceUrl) fmhyResourceMap[normalizedResourceUrl] = fmhyUrl;
+        }
       } else {
         console.warn(`Failed to fetch from ${response.url}`);
       }
@@ -799,6 +844,7 @@ async function fetchSafeSites() {
     await browserAPI.storage.local.set({
       safeSiteCount: safeSites.length,
       safeSiteList: safeSites,
+      fmhyResourceMap,
     });
 
     console.log("Stored safe site count:", safeSites.length);
@@ -1220,7 +1266,15 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(
           `getSiteStatus result for ${url}: ${status}, matched: ${matchedUrl}`
         );
-        sendResponse({ status: status, matchedUrl: matchedUrl, reason: reason, password: password, inviteCode: inviteCode });
+        const fmhyUrl = getFmhyUrlForMatch(matchedUrl);
+        sendResponse({
+          status,
+          matchedUrl,
+          fmhyUrl,
+          reason,
+          password,
+          inviteCode,
+        });
       } catch (error) {
         console.error("Error in getSiteStatus handler:", error);
         sendResponse({
@@ -1536,6 +1590,7 @@ async function initializeExtension() {
           "fmhySites",
           "starredSites",
           "safeSiteList",
+          "fmhyResourceMap",
           "unsafeReasons",
         ]);
 
@@ -1594,10 +1649,15 @@ async function initializeExtension() {
           await fetchStarredSites();
         }
 
-        // Load safe sites from storage
+        fmhyResourceMap = storedData.fmhyResourceMap || {};
+
+        // Load safe sites and their FMHY guide locations from storage
         if (storedData.safeSiteList && storedData.safeSiteList.length > 0) {
           safeSites = storedData.safeSiteList;
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
+          if (Object.keys(fmhyResourceMap).length === 0) {
+            await fetchSafeSites();
+          }
         } else {
           // If no safe sites in storage, fetch them now
           await fetchSafeSites();

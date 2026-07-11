@@ -373,6 +373,10 @@
     "message": "Liste de filtres mise à jour avec succès !",
     "description": "Filterlist update success message"
   },
+  "viewOnFmhy": {
+    "message": "Voir sur FMHY →",
+    "description": "Lien vers la section correspondante sur FMHY"
+  },
   "updateFailed": {
     "message": "Échec de la mise à jour. Veuillez réessayer.",
     "description": "Filterlist update failed message"

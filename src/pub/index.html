@@ -141,6 +141,25 @@
       color: var(--accent-color);
     }
 
+    #fmhy-resource-link {
+      display: none;
+      margin-top: 2px;
+      color: var(--link-color);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    #fmhy-resource-link.visible {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #fmhy-resource-link:hover {
+      text-decoration: underline;
+    }
+
     #error-message {
       color: red;
       margin-top: 10px;
@@ -433,6 +452,7 @@
   <div id="status-container">
     <img id="status-icon" class="status-image" src="safe.png" alt="Status Icon" />
     <p id="status-message" data-i18n="checkingSiteStatus">Checking site status...</p>
+    <a id="fmhy-resource-link" target="_blank" rel="noopener noreferrer" data-i18n="viewOnFmhy">View on FMHY →</a>
   </div>
   <p id="error-message"></p>
   <div id="password-container">

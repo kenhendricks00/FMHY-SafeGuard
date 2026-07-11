@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const statusIcon = document.getElementById("status-icon");
   const statusMessage = document.getElementById("status-message");
+  const fmhyResourceLink = document.getElementById("fmhy-resource-link");
   const errorMessage = document.getElementById("error-message");
   const reasonContainer = document.getElementById("reason-container");
   const reasonContent = document.getElementById("reason-content");
@@ -311,7 +312,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       // Update the popup with the result
-      handleStatusUpdate(response.status, displayUrl, response.reason, response.password, response.inviteCode);
+      handleStatusUpdate(
+        response.status,
+        displayUrl,
+        response.reason,
+        response.password,
+        response.inviteCode,
+        response.fmhyUrl
+      );
     } catch (error) {
       console.error("Error checking site status:", error);
       errorMessage.textContent = `Error: ${error.message}`;
@@ -319,8 +327,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function handleStatusUpdate(status, displayUrl, reason, password, inviteCode) {
+  function handleStatusUpdate(status, displayUrl, reason, password, inviteCode, fmhyUrl) {
     let message;
+
+    if (fmhyUrl && (status === "safe" || status === "starred")) {
+      fmhyResourceLink.href = fmhyUrl;
+      fmhyResourceLink.classList.add("visible");
+    } else {
+      fmhyResourceLink.removeAttribute("href");
+      fmhyResourceLink.classList.remove("visible");
+    }
 
     // Handle reason display in dedicated container
     if (reason && (status === "unsafe" || status === "potentially_unsafe")) {

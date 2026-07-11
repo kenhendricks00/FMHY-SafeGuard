@@ -11,6 +11,14 @@ const backgroundScript = fs.readFileSync(
   path.join(__dirname, "..", "src", "js", "background.js"),
   "utf8",
 );
+const popupHtml = fs.readFileSync(
+  path.join(__dirname, "..", "src", "pub", "index.html"),
+  "utf8",
+);
+const popupScript = fs.readFileSync(
+  path.join(__dirname, "..", "src", "pub", "index.js"),
+  "utf8",
+);
 
 function loadFunction(source, name) {
   const start = source.indexOf(`function ${name}(`);
@@ -67,4 +75,27 @@ test("all bold links on a starred guide line are treated as starred", () => {
     "https://first.example/",
     "https://second.example/",
   ]);
+});
+
+test("guide resources map to their FMHY page section", () => {
+  const extractFmhyResourceMap = loadFunction(
+    backgroundScript,
+    "extractFmhyResourceMap",
+  );
+  const markdown = [
+    "## Privacy Tools",
+    "### VPN Services",
+    "* **[Example VPN](https://vpn.example/download)**",
+  ].join("\n");
+
+  assert.deepEqual(
+    extractFmhyResourceMap(markdown, "https://fmhy.net/privacy"),
+    { "https://vpn.example/download": "https://fmhy.net/privacy#vpn-services" },
+  );
+});
+
+test("popup exposes a View on FMHY link for mapped resources", () => {
+  assert.match(popupHtml, /id="fmhy-resource-link"/);
+  assert.match(popupScript, /response\.fmhyUrl/);
+  assert.match(popupHtml, /View on FMHY/);
 });
