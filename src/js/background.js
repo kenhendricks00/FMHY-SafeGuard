@@ -1371,11 +1371,11 @@ async function openWarningPage(tabId, unsafeUrl) {
   }
 
   // Fetch the warning page setting
-  const { warningPage } = await browserAPI.storage.sync.get({
-    warningPage: true,
+  const { showWarning } = await browserAPI.storage.local.get({
+    showWarning: true,
   });
 
-  if (!warningPage) {
+  if (!showWarning) {
     console.log("Warning page is disabled by the user settings.");
     return;
   }

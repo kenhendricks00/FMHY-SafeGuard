@@ -7,6 +7,10 @@ const contentScript = fs.readFileSync(
   path.join(__dirname, "..", "src", "js", "content.js"),
   "utf8",
 );
+const backgroundScript = fs.readFileSync(
+  path.join(__dirname, "..", "src", "js", "background.js"),
+  "utf8",
+);
 
 test("processed link tracking can be reset after settings change", () => {
   assert.match(contentScript, /let processedLinks = new WeakSet\(\);/);
@@ -23,4 +27,13 @@ test("processed links use an extension-owned data attribute", () => {
     /link\.setAttribute\("data-fmhy-processed", "true"\);/,
   );
   assert.doesNotMatch(contentScript, /classList\.add\("fmhy-processed"\)/);
+});
+
+test("warning redirects honor the setting saved by the options page", () => {
+  assert.match(
+    backgroundScript,
+    /storage\.local\.get\(\{\s*showWarning: true,\s*\}\)/,
+  );
+  assert.match(backgroundScript, /if \(!showWarning\)/);
+  assert.doesNotMatch(backgroundScript, /storage\.sync\.get\(\{\s*warningPage:/);
 });
