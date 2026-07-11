@@ -19,6 +19,21 @@ const popupScript = fs.readFileSync(
   path.join(__dirname, "..", "src", "pub", "index.js"),
   "utf8",
 );
+const fmhyHighlightScriptPath = path.join(
+  __dirname,
+  "..",
+  "src",
+  "js",
+  "fmhy-highlight.js",
+);
+const chromiumManifest = fs.readFileSync(
+  path.join(__dirname, "..", "platform", "chromium", "manifest.json"),
+  "utf8",
+);
+const firefoxManifest = fs.readFileSync(
+  path.join(__dirname, "..", "platform", "firefox", "manifest.json"),
+  "utf8",
+);
 
 function loadFunction(source, name) {
   const start = source.indexOf(`function ${name}(`);
@@ -84,7 +99,7 @@ test("guide resources map to their FMHY page section", () => {
   );
   const markdown = [
     "## Privacy Tools",
-    "### VPN Services",
+    "### ▷ VPN Services",
     "* **[Example VPN](https://vpn.example/download)**",
   ].join("\n");
 
@@ -98,4 +113,15 @@ test("popup exposes a View on FMHY link for mapped resources", () => {
   assert.match(popupHtml, /id="fmhy-resource-link"/);
   assert.match(popupScript, /response\.fmhyUrl/);
   assert.match(popupHtml, /View on FMHY/);
+});
+
+test("opening an FMHY resource highlights its matching guide line", () => {
+  assert.equal(fs.existsSync(fmhyHighlightScriptPath), true);
+  const fmhyHighlightScript = fs.readFileSync(fmhyHighlightScriptPath, "utf8");
+
+  assert.match(popupScript, /pendingFmhyHighlight/);
+  assert.match(fmhyHighlightScript, /vp-search-highlight-target/);
+  assert.match(fmhyHighlightScript, /closest\("li, p"\)/);
+  assert.match(chromiumManifest, /js\/fmhy-highlight\.js/);
+  assert.match(firefoxManifest, /js\/fmhy-highlight\.js/);
 });

@@ -79,6 +79,11 @@
                 "js/content.js"
             ],
             "run_at": "document_idle"
+        },
+        {
+            "matches": ["https://fmhy.net/*"],
+            "js": ["js/fmhy-highlight.js"],
+            "run_at": "document_idle"
         }
     ],
     "background": {

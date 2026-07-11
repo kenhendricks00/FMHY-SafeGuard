@@ -15,6 +15,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const warningPageUrl = browserAPI.runtime.getURL("pub/warning-page.html");
   const settingsPageUrl = browserAPI.runtime.getURL("pub/settings-page.html");
   const welcomePageUrl = browserAPI.runtime.getURL("pub/welcome-page.html");
+  let fmhyLinkContext = null;
+
+  fmhyResourceLink.addEventListener("click", async (event) => {
+    if (!fmhyLinkContext) return;
+    event.preventDefault();
+    await browserAPI.storage.local.set({
+      pendingFmhyHighlight: {
+        ...fmhyLinkContext,
+        createdAt: Date.now(),
+      },
+    });
+    await browserAPI.tabs.create({ url: fmhyLinkContext.fmhyUrl });
+  });
 
   // Apply theme
   await applyTheme();
@@ -318,7 +331,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         response.reason,
         response.password,
         response.inviteCode,
-        response.fmhyUrl
+        response.fmhyUrl,
+        response.matchedUrl
       );
     } catch (error) {
       console.error("Error checking site status:", error);
@@ -327,15 +341,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function handleStatusUpdate(status, displayUrl, reason, password, inviteCode, fmhyUrl) {
+  function handleStatusUpdate(status, displayUrl, reason, password, inviteCode, fmhyUrl, resourceUrl) {
     let message;
 
     if (fmhyUrl && (status === "safe" || status === "starred")) {
       fmhyResourceLink.href = fmhyUrl;
       fmhyResourceLink.classList.add("visible");
+      fmhyLinkContext = { fmhyUrl, resourceUrl };
     } else {
       fmhyResourceLink.removeAttribute("href");
       fmhyResourceLink.classList.remove("visible");
+      fmhyLinkContext = null;
     }
 
     // Handle reason display in dedicated container

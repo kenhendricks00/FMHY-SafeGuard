@@ -586,7 +586,8 @@ function extractFmhyResourceMap(markdown, guideUrl) {
         .toLowerCase()
         .replace(/[^\p{L}\p{N}\s-]/gu, "")
         .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
       sectionUrl = anchor ? `${guideUrl}#${anchor}` : guideUrl;
     }
 
@@ -1655,7 +1656,10 @@ async function initializeExtension() {
         if (storedData.safeSiteList && storedData.safeSiteList.length > 0) {
           safeSites = storedData.safeSiteList;
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
-          if (Object.keys(fmhyResourceMap).length === 0) {
+          const hasLegacyAnchors = Object.values(fmhyResourceMap).some(
+            (fmhyUrl) => fmhyUrl.includes("#-")
+          );
+          if (Object.keys(fmhyResourceMap).length === 0 || hasLegacyAnchors) {
             await fetchSafeSites();
           }
         } else {
