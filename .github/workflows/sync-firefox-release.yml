@@ -30,14 +30,49 @@ jobs:
         id: signed-xpi
         env:
           ADDON_ID: ${{ vars.FIREFOX_ADDON_ID }}
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
           VERSION: ${{ steps.release.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
           test -n "$ADDON_ID"
+          TOKEN=$(python - <<'PY'
+          import base64
+          import hashlib
+          import hmac
+          import json
+          import os
+          import time
+          import uuid
+
+          def encode(value):
+              raw = json.dumps(value, separators=(",", ":")).encode()
+              return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+          now = int(time.time())
+          header = encode({"alg": "HS256", "typ": "JWT"})
+          payload = encode({
+              "iss": os.environ["AMO_JWT_ISSUER"],
+              "jti": uuid.uuid4().hex,
+              "iat": now,
+              "exp": now + 60,
+          })
+          message = f"{header}.{payload}"
+          signature = hmac.new(
+              os.environ["AMO_JWT_SECRET"].encode(),
+              message.encode(),
+              hashlib.sha256,
+          ).digest()
+          encoded_signature = base64.urlsafe_b64encode(signature).rstrip(b"=").decode()
+          print(f"{message}.{encoded_signature}")
+          PY
+          )
           ENCODED_ID=$(jq -rn --arg value "$ADDON_ID" '$value|@uri')
           API="https://addons.mozilla.org/api/v5/addons/addon/${ENCODED_ID}/versions/${VERSION}/"
-          HTTP_STATUS=$(curl --silent --show-error --retry 3 -o version.json -w '%{http_code}' "$API")
+          HTTP_STATUS=$(curl --silent --show-error --retry 3 \
+            -H "Authorization: JWT $TOKEN" \
+            -o version.json -w '%{http_code}' "$API")
           if [[ "$HTTP_STATUS" == "404" ]]; then
             echo "Signed Firefox v${VERSION} is not public yet."
             echo "available=false" >> "$GITHUB_OUTPUT"
