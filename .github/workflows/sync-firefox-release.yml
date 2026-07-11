@@ -82,7 +82,7 @@ jobs:
             cat version.json >&2
             exit 1
           fi
-          FILE_URL=$(jq -r '.files[] | select(.status == "public") | .url' version.json | head -n 1)
+          FILE_URL=$(jq -r '(.files // [])[] | select(.status == "public") | .url' version.json | head -n 1)
           if [[ -z "$FILE_URL" ]]; then
             echo "Signed Firefox v${VERSION} is not public yet."
             echo "available=false" >> "$GITHUB_OUTPUT"
