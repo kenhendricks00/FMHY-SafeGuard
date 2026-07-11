@@ -1,106 +1,172 @@
-name: Release Extensions
+name: Release extensions
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:  # Allows manual triggering from GitHub UI
+      - "v*.*.*"
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Required to write contents and create releases
+  contents: write
 
 jobs:
-  build-and-release:
+  release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.number }}
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
-      - name: Checkout Repository
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install Dependencies
+      - name: Validate release version
+        id: version
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y zip jq
+          set -euo pipefail
+          CHROME_VERSION=$(jq -r .version platform/chromium/manifest.json)
+          FIREFOX_VERSION=$(jq -r .version platform/firefox/manifest.json)
 
-      # Step to get the version, or use a default if no tag exists (manual trigger)
-      - name: Get Version from Tag or Default
-        id: get_version
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-            echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          else
-            echo "No tag found, using default version"
-            echo "VERSION=dev-version" >> $GITHUB_ENV
+          if [[ "$CHROME_VERSION" != "$FIREFOX_VERSION" ]]; then
+            echo "Browser manifests have different versions" >&2
+            exit 1
           fi
 
-      - name: Assemble Release Notes
-        id: release_notes
-        run: |
-          VERSION=${{ env.VERSION }}
-          echo "## $VERSION" > release_notes.md
-          echo "" >> release_notes.md
-          if [[ "$VERSION" != "dev-version" ]]; then
-            awk "/^## \\[$VERSION\\]/, /^## \\[/" CHANGELOG.md >> release_notes.md || cat RELEASE.HEAD.md >> release_notes.md
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            TAG="$GITHUB_REF_NAME"
+            if [[ "$TAG" != "v$CHROME_VERSION" ]]; then
+              echo "Tag $TAG does not match manifest version v$CHROME_VERSION" >&2
+              exit 1
+            fi
           else
-            echo "Manual run, no release notes extracted from CHANGELOG.md" >> release_notes.md
-            cat RELEASE.HEAD.md >> release_notes.md
+            TAG="v$CHROME_VERSION"
           fi
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
+          echo "number=$CHROME_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Build Chrome Extension
+      - name: Build browser packages
+        shell: bash
         run: |
-          mkdir -p dist/chromium
-          cp -r src/* dist/chromium/
+          set -euo pipefail
+          VERSION=${{ steps.version.outputs.number }}
+          mkdir -p dist/chromium dist/firefox
+          cp -R src/. dist/chromium/
+          cp -R src/. dist/firefox/
           cp platform/chromium/manifest.json dist/chromium/manifest.json
-          cd dist/chromium
-          zip -r ../FMHY-SafeGuard_${{ env.VERSION }}.chromium.zip ./*
-          cd ../..
-
-      - name: Build Firefox Extension
-        run: |
-          mkdir -p dist/firefox
-          cp -r src/* dist/firefox/
           cp platform/firefox/manifest.json dist/firefox/manifest.json
-          cd dist/firefox
-          zip -r ../FMHY-SafeGuard_${{ env.VERSION }}.firefox.zip ./*
-          cd ..
-          mv FMHY-SafeGuard_${{ env.VERSION }}.firefox.zip FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi
+          (cd dist/chromium && zip -qr "../FMHY-SafeGuard_v${VERSION}.chromium.zip" .)
+          (cd dist/firefox && zip -qr "../FMHY-SafeGuard_v${VERSION}.firefox.zip" .)
 
-      - name: Upload Chrome Extension
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/FMHY-SafeGuard_${{ env.VERSION }}.chromium.zip
-          asset_name: FMHY-SafeGuard_${{ env.VERSION }}.chromium.zip
-          asset_content_type: application/zip
+      - name: Extract release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=${{ steps.version.outputs.number }}
+          awk -v heading="## v${VERSION}" '
+            index($0, heading) == 1 { found=1 }
+            found && /^## v/ && index($0, heading) != 1 { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md || { echo "No changelog section for v${VERSION}" >&2; exit 1; }
 
-      - name: Upload Firefox Extension
-        uses: actions/upload-release-asset@v1
+      - name: Create or update GitHub release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=${{ steps.version.outputs.tag }}
+          VERSION=${{ steps.version.outputs.number }}
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file release-notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
+          fi
+          gh release upload "$TAG" --clobber \
+            "dist/FMHY-SafeGuard_v${VERSION}.chromium.zip" \
+            "dist/FMHY-SafeGuard_v${VERSION}.firefox.zip"
+
+      - name: Upload build workspace
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi
-          asset_name: FMHY-SafeGuard_${{ env.VERSION }}.firefox.xpi
-          asset_content_type: application/x-xpinstall
+          name: extension-release-${{ steps.version.outputs.number }}
+          path: dist
+          retention-days: 7
+
+  publish-chrome:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download browser packages
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-release-${{ needs.release.outputs.version }}
+          path: dist
+
+      - name: Authenticate to Google Cloud
+        id: google-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CWS_SERVICE_ACCOUNT_JSON }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+
+      - name: Upload and publish Chrome extension
+        env:
+          ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
+          EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          VERSION: ${{ needs.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXTENSION_ID"
+          test -n "$PUBLISHER_ID"
+          PACKAGE="dist/FMHY-SafeGuard_v${VERSION}.chromium.zip"
+          BASE="https://chromewebstore.googleapis.com"
+
+          curl --fail-with-body --retry 3 \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -X POST -T "$PACKAGE" \
+            "$BASE/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload"
+
+          curl --fail-with-body --retry 3 \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -X POST -d '{}' \
+            "$BASE/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:publish"
+
+  submit-firefox:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download browser packages
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-release-${{ needs.release.outputs.version }}
+          path: dist
+
+      - name: Submit Firefox extension for review
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes web-ext@8.10.0 sign \
+            --source-dir dist/firefox \
+            --artifacts-dir dist/firefox-submission \
+            --channel listed \
+            --approval-timeout 0 \
+            --no-input
