@@ -1,0 +1,384 @@
+{
+  "extensionName": {
+    "message": "FMHY SafeGuard",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "Защитите свой браузер с помощью проверки безопасности сайтов в реальном времени на основе списка фильтров FMHY.",
+    "description": "Description of the extension"
+  },
+  "checkingSiteStatus": {
+    "message": "Проверка статуса сайта...",
+    "description": "Loading message in popup"
+  },
+  "reason": {
+    "message": "Причина",
+    "description": "Label for unsafe site reason"
+  },
+  "fmhyNote": {
+    "message": "Заметка FMHY",
+    "description": "Label for FMHY notes section"
+  },
+  "thinkMistake": {
+    "message": "Думаете, это ошибка?",
+    "description": "Feedback prompt"
+  },
+  "letUsKnow": {
+    "message": "Сообщите нам",
+    "description": "Link text for reporting issues"
+  },
+  "poweredBy": {
+    "message": "Работает на",
+    "description": "Footer text"
+  },
+  "fmhyFilterlist": {
+    "message": "FMHY Filterlist",
+    "description": "Filterlist name"
+  },
+  "statusUnsafe": {
+    "message": "$DOMAIN$ отмечен как <strong>небезопасный</strong>. Рекомендуется избегать этот сайт.",
+    "description": "Unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusPotentiallyUnsafe": {
+    "message": "$DOMAIN$ <strong>потенциально небезопасен</strong>. Действуйте с осторожностью.",
+    "description": "Potentially unsafe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusFmhy": {
+    "message": "$DOMAIN$ — сайт, связанный с <strong>FMHY</strong>. Можете доверять.",
+    "description": "FMHY site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "fmhy.net"
+      }
+    }
+  },
+  "statusSafe": {
+    "message": "$DOMAIN$ <strong>безопасен</strong> для просмотра.",
+    "description": "Safe site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusStarred": {
+    "message": "$DOMAIN$ — <strong>избранный</strong> сайт.",
+    "description": "Starred site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusUnknown": {
+    "message": "$DOMAIN$ отсутствует в нашей базе данных.",
+    "description": "Unknown site message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusNoData": {
+    "message": "Нет данных для <strong>$DOMAIN$</strong>.",
+    "description": "No data available message",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "warningPageTitle": {
+    "message": "FMHY SafeGuard - Предупреждение",
+    "description": "Warning page title"
+  },
+  "warningText": {
+    "message": "Этот сайт отмечен как <strong>небезопасный</strong>.",
+    "description": "Warning page main text"
+  },
+  "warningRecommendation": {
+    "message": "Рекомендуется избегать этот сайт.",
+    "description": "Warning page recommendation"
+  },
+  "goBack": {
+    "message": "Вернуться (Рекомендуется)",
+    "description": "Go back button text"
+  },
+  "proceedAnyway": {
+    "message": "Продолжить всё равно",
+    "description": "Proceed button text"
+  },
+  "settingsTitle": {
+    "message": "Настройки FMHY SafeGuard",
+    "description": "Settings page title"
+  },
+  "filterlistStatistics": {
+    "message": "Статистика списка фильтров",
+    "description": "Settings section title"
+  },
+  "lastUpdated": {
+    "message": "Последнее обновление:",
+    "description": "Last updated label"
+  },
+  "unsafeSites": {
+    "message": "Небезопасные сайты",
+    "description": "Stat label"
+  },
+  "potentiallyUnsafeSites": {
+    "message": "Потенциально небезопасные сайты",
+    "description": "Stat label"
+  },
+  "safeSites": {
+    "message": "Безопасные сайты",
+    "description": "Stat label"
+  },
+  "nextUpdateScheduled": {
+    "message": "Следующее обновление запланировано на:",
+    "description": "Update schedule label"
+  },
+  "theme": {
+    "message": "Тема",
+    "description": "Theme setting title"
+  },
+  "themeDescription": {
+    "message": "Выберите предпочитаемый режим оформления",
+    "description": "Theme setting description"
+  },
+  "systemDefault": {
+    "message": "Системная",
+    "description": "Theme option"
+  },
+  "darkMode": {
+    "message": "Тёмная тема",
+    "description": "Theme option"
+  },
+  "amoled": {
+    "message": "AMOLED",
+    "description": "Theme option"
+  },
+  "lightMode": {
+    "message": "Светлая тема",
+    "description": "Theme option"
+  },
+  "warningPage": {
+    "message": "Страница предупреждения",
+    "description": "Setting title"
+  },
+  "warningPageDescription": {
+    "message": "Показывать страницу предупреждения для небезопасных сайтов",
+    "description": "Setting description"
+  },
+  "linkHighlighting": {
+    "message": "Подсветка ссылок",
+    "description": "Setting title"
+  },
+  "linkHighlightingDescription": {
+    "message": "Визуально выделять безопасные и небезопасные ссылки на веб-страницах",
+    "description": "Setting description"
+  },
+  "highlightSafeLinks": {
+    "message": "Выделять безопасные ссылки (зелёным)",
+    "description": "Setting option"
+  },
+  "highlightUnsafeLinks": {
+    "message": "Выделять небезопасные ссылки (красным)",
+    "description": "Setting option"
+  },
+  "showWarningBanners": {
+    "message": "Показывать предупреждающие баннеры рядом с небезопасными ссылками",
+    "description": "Setting option"
+  },
+  "safeLinkColor": {
+    "message": "Цвет безопасной ссылки",
+    "description": "Setting option"
+  },
+  "unsafeLinkColor": {
+    "message": "Цвет небезопасной ссылки",
+    "description": "Setting option"
+  },
+  "autoUpdateFilterlist": {
+    "message": "Автообновление списка фильтров",
+    "description": "Setting title"
+  },
+  "autoUpdateDescription": {
+    "message": "Автоматически обновлять фильтры безопасности",
+    "description": "Setting description"
+  },
+  "daily": {
+    "message": "Ежедневно",
+    "description": "Update frequency option"
+  },
+  "weekly": {
+    "message": "Еженедельно",
+    "description": "Update frequency option"
+  },
+  "monthly": {
+    "message": "Ежемесячно",
+    "description": "Update frequency option"
+  },
+  "domainManagement": {
+    "message": "Управление доменами",
+    "description": "Setting title"
+  },
+  "domainManagementDescription": {
+    "message": "Вручную добавлять домены в списки безопасных или небезопасных",
+    "description": "Setting description"
+  },
+  "safeDomains": {
+    "message": "Безопасные домены (по одному на строку)",
+    "description": "Textarea label"
+  },
+  "unsafeDomains": {
+    "message": "Небезопасные домены (по одному на строку)",
+    "description": "Textarea label"
+  },
+  "saveSettings": {
+    "message": "Сохранить настройки",
+    "description": "Save button text"
+  },
+  "settingsSaved": {
+    "message": "Настройки успешно сохранены!",
+    "description": "Success notification"
+  },
+  "openSettings": {
+    "message": "Открыть настройки",
+    "description": "Settings button tooltip"
+  },
+  "language": {
+    "message": "Язык",
+    "description": "Language setting title"
+  },
+  "languageDescription": {
+    "message": "Выберите предпочитаемый язык",
+    "description": "Language setting description"
+  },
+  "autoDetect": {
+    "message": "Автоопределение",
+    "description": "Auto-detect language option"
+  },
+  "welcomeTitle": {
+    "message": "Добро пожаловать в FMHY SafeGuard",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Давайте настроим безопасный просмотр",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeStep1Title": {
+    "message": "Закрепите расширение на панели инструментов",
+    "description": "Welcome step 1 title"
+  },
+  "welcomeStep1Desc": {
+    "message": "Для быстрого доступа закрепите FMHY SafeGuard на панели инструментов браузера:",
+    "description": "Welcome step 1 description"
+  },
+  "welcomeStep1Item1": {
+    "message": "Нажмите на меню расширений (значок пазла) на панели инструментов",
+    "description": "Welcome step 1 item 1"
+  },
+  "welcomeStep1Item2": {
+    "message": "Найдите \"FMHY SafeGuard\" в списке",
+    "description": "Welcome step 1 item 2"
+  },
+  "welcomeStep1Item3": {
+    "message": "Нажмите на значок булавки или щёлкните правой кнопкой и выберите \"Закрепить на панели\"",
+    "description": "Welcome step 1 item 3"
+  },
+  "welcomeStep2Title": {
+    "message": "Как это работает",
+    "description": "Welcome step 2 title"
+  },
+  "welcomeStep2Desc": {
+    "message": "FMHY SafeGuard автоматически проверяет сайты по нашей базе данных безопасности:",
+    "description": "Welcome step 2 description"
+  },
+  "welcomeStep2Item1": {
+    "message": "Блокирует доступ к известным опасным сайтам",
+    "description": "Welcome step 2 item 1"
+  },
+  "welcomeStep2Item2": {
+    "message": "Показывает предупреждения для потенциально опасных сайтов",
+    "description": "Welcome step 2 item 2"
+  },
+  "welcomeStep2Item3": {
+    "message": "Определяет надёжные безопасные сайты",
+    "description": "Welcome step 2 item 3"
+  },
+  "welcomeStep2Item4": {
+    "message": "Показывает заметки из вики FMHY для сопоставленных сайтов",
+    "description": "Welcome step 2 item 4"
+  },
+  "welcomeStep2Item5": {
+    "message": "Отображает причины, почему сайты помечены как опасные",
+    "description": "Welcome step 2 item 5"
+  },
+  "welcomeIconDesc": {
+    "message": "Цвет значка расширения указывает на статус текущего сайта:",
+    "description": "Welcome icon description"
+  },
+  "welcomeStep3Title": {
+    "message": "Настройте параметры",
+    "description": "Welcome step 3 title"
+  },
+  "welcomeStep3Desc": {
+    "message": "Настройте расширение под себя:",
+    "description": "Welcome step 3 description"
+  },
+  "welcomeStep3Item1": {
+    "message": "Выберите светлую, тёмную или AMOLED тему",
+    "description": "Welcome step 3 item 1"
+  },
+  "welcomeStep3Item2": {
+    "message": "Выберите предпочитаемый язык (доступно 7)",
+    "description": "Welcome step 3 item 2"
+  },
+  "welcomeStep3Item3": {
+    "message": "Включите/отключите страницы предупреждений",
+    "description": "Welcome step 3 item 3"
+  },
+  "welcomeStep3Item4": {
+    "message": "Установите частоту автоматического обновления",
+    "description": "Welcome step 3 item 4"
+  },
+  "welcomeStep3Item5": {
+    "message": "Настройте цвета подсветки ссылок",
+    "description": "Welcome step 3 item 5"
+  },
+  "updateNow": {
+    "message": "Обновить сейчас",
+    "description": "Update now button text"
+  },
+  "updating": {
+    "message": "Обновление...",
+    "description": "Updating status text"
+  },
+  "filterlistUpdated": {
+    "message": "Список фильтров успешно обновлён!",
+    "description": "Filterlist update success message"
+  },
+  "viewOnFmhy": {
+    "message": "Посмотреть на FMHY →",
+    "description": "Ссылка на соответствующий раздел ресурса на FMHY"
+  },
+  "updateFailed": {
+    "message": "Ошибка обновления. Попробуйте ещё раз.",
+    "description": "Filterlist update failed message"
+  }
+}
