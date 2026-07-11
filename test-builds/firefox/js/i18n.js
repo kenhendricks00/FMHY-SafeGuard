@@ -3,7 +3,7 @@
 
 (function() {
   const browserAPI = typeof browser !== "undefined" ? browser : chrome;
-  
+
   // Cache for loaded translations
   let translations = {};
   let currentLanguage = "en";
@@ -31,7 +31,7 @@
     if (translations[lang]) {
       return translations[lang];
     }
-    
+
     try {
       const url = browserAPI.runtime.getURL(`_locales/${lang}/messages.json`);
       const response = await fetch(url);
@@ -42,7 +42,7 @@
     } catch (e) {
       console.error(`Error loading translations for ${lang}:`, e);
     }
-    
+
     // Fall back to English if loading fails
     if (lang !== "en") {
       return loadTranslations("en");
@@ -54,14 +54,14 @@
   function getMessageFromTranslations(key, substitutions) {
     const langData = translations[currentLanguage] || translations["en"] || {};
     const entry = langData[key];
-    
+
     if (!entry || !entry.message) {
       // Fall back to browser API
       return browserAPI.i18n.getMessage(key, substitutions) || key;
     }
-    
+
     let message = entry.message;
-    
+
     // Handle substitutions (e.g., $DOMAIN$)
     if (substitutions) {
       const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
@@ -78,7 +78,7 @@
         }
       });
     }
-    
+
     return message;
   }
 

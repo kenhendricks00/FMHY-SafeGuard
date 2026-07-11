@@ -26,7 +26,7 @@ const notesMapping = {
   // BuzzHeavier
   "buzzheavier.com": "buzzheavier-warning",
 
-  // ChatGPT  
+  // ChatGPT
   "chat.openai.com": "chatgpt-limits",
   "chatgpt.com": "chatgpt-limits",
 
@@ -48,7 +48,7 @@ const notesMapping = {
   // FileZilla
   "filezilla-project.org": "filezilla",
 
-  // Fluxy Repacks  
+  // Fluxy Repacks
   "fluxyrepacks.site": "fluxy-repacks",
 
   // Foxit Reader

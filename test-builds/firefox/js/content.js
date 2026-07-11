@@ -486,7 +486,7 @@ function addWarningBanner(link, reason = null) {
             text-shadow: 0 0 4px ${settings.untrustedColor} !important;
             font-weight: bold !important;
           }
-          
+
           .fmhy-unsafe-badge {
             display: inline-block !important;
             color: #ffffff !important;

@@ -422,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await browserAPI.storage.local.set({ language: newLang });
       // Apply translations if i18n is available
       if (window.i18n && window.i18n.setLanguage) {
-        await window.i18n.setLanguage(newLang === "auto" ? 
+        await window.i18n.setLanguage(newLang === "auto" ?
           (browserAPI.i18n.getUILanguage().split("-")[0]) : newLang);
       }
     });
@@ -450,7 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const originalText = updateNowBtn.querySelector("span") || updateNowBtn;
       const btnText = updateNowBtn.textContent;
       updateNowBtn.querySelector("span").textContent = window.i18n ? window.i18n.getMessage("updating") : "Updating...";
-      
+
       try {
         await browserAPI.runtime.sendMessage({ action: "forceUpdate" });
         await loadFilterlistStats();
