@@ -7,7 +7,7 @@
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
 // Track processed elements to avoid reprocessing
-const processedLinks = new WeakSet();
+let processedLinks = new WeakSet();
 const processedDomains = new Set();
 const highlightCountTrusted = new Map();
 const highlightCountUntrusted = new Map();
@@ -377,7 +377,7 @@ function setupObserver() {
       reprocessTimer = setTimeout(() => {
         // Instead of full reprocessing, just scan for unprocessed links
         document
-          .querySelectorAll("a[href]:not(.fmhy-processed)")
+          .querySelectorAll("a[href]:not([data-fmhy-processed])")
           .forEach((link) => processLink(link, currentDomain));
       }, 100);
     }
@@ -398,8 +398,8 @@ function processLink(link, currentDomain) {
   if (processedLinks.has(link)) return;
   processedLinks.add(link);
 
-  // Add a class to mark as processed for easier detection
-  link.classList.add("fmhy-processed");
+  // Use an extension-owned data attribute to avoid colliding with site classes.
+  link.setAttribute("data-fmhy-processed", "true");
 
   try {
     // Skip links without proper URLs
