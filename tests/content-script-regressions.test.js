@@ -62,6 +62,7 @@ function loadFunctionWithDependencies(source, name, dependencies) {
 
 const sharedResourceHosts = new Set([
   "github.com",
+  "gist.github.com",
   "raw.githubusercontent.com",
   "gitlab.com",
   "codeberg.org",
@@ -121,6 +122,31 @@ test("all bold links on a starred guide line are treated as starred", () => {
     "https://first.example/",
     "https://second.example/",
   ]);
+});
+
+test("unbolded alternatives on a starred guide line are also starred", () => {
+  const extractStarredUrlsFromMarkdown = loadFunction(
+    backgroundScript,
+    "extractStarredUrlsFromMarkdown",
+  );
+  const markdown =
+    "* ⭐ **[GitHub Gists](https://gist.github.com/)** or [GitLab Snippets](https://docs.gitlab.com/user/snippets/) - Multi-Syntax / [Related](https://related.example/)";
+
+  assert.deepEqual(extractStarredUrlsFromMarkdown(markdown), [
+    "https://gist.github.com/",
+    "https://docs.gitlab.com/user/snippets/",
+  ]);
+});
+
+test("root-only popup labels omit their trailing slash", () => {
+  const formatHostAndPath = loadFunction(popupScript, "formatHostAndPath");
+
+  assert.equal(formatHostAndPath(new URL("https://github.com/")), "github.com");
+  assert.equal(formatHostAndPath(new URL("https://rentry.co/")), "rentry.co");
+  assert.equal(
+    formatHostAndPath(new URL("https://docs.gitlab.com/user/snippets/")),
+    "docs.gitlab.com/user/snippets",
+  );
 });
 
 test("guide resources map to their FMHY page section", () => {
@@ -276,6 +302,20 @@ test("shared hosts require the same path-bound resource", () => {
     ),
     false,
   );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://gist.github.com/starred",
+      "https://gist.github.com/",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://gist.github.com/example/dangerous-gist",
+      "https://gist.github.com/",
+    ),
+    false,
+  );
 });
 
 test("normal subdomains only inherit the matching listed path", () => {
@@ -346,6 +386,8 @@ test("status matching isolates shared resources and recognizes matching subdomai
       fmhySitesRegex: null,
       starredSites: [
         "https://github.com/fmhy/FMHY-SafeGuard",
+        "https://gist.github.com/",
+        "https://docs.gitlab.com/user/snippets/",
         "https://ente.com/auth",
         "https://mullvad.net",
       ],
@@ -373,6 +415,15 @@ test("status matching isolates shared resources and recognizes matching subdomai
   assert.equal(getStatusFromLists("https://auth.ente.com/auth"), "starred");
   assert.equal(getStatusFromLists("https://auth.ente.com/login"), "starred");
   assert.equal(getStatusFromLists("https://auth.ente.com/photos"), "no_data");
+  assert.equal(getStatusFromLists("https://gist.github.com/starred"), "starred");
+  assert.equal(
+    getStatusFromLists("https://gist.github.com/example/dangerous-gist"),
+    "no_data",
+  );
+  assert.equal(
+    getStatusFromLists("https://docs.gitlab.com/user/snippets/"),
+    "starred",
+  );
   assert.equal(getStatusFromLists("https://mullvad.net/en"), "starred");
 });
 
@@ -407,7 +458,7 @@ test("the popup preserves paths for every shared resource host", () => {
   );
   assert.match(
     popupScript,
-    /displayUrl = matchedUrlObj\.hostname \+ matchedUrlObj\.pathname/,
+    /displayUrl = formatHostAndPath\(matchedUrlObj\)/,
   );
 });
 
@@ -438,13 +489,8 @@ test("the toolbar does not inherit root status on shared hosts", () => {
 });
 
 test("the popup preserves canonical paths for ordinary FMHY resources", () => {
-  assert.ok(
-    popupScript.includes(
-      'const matchedPath = matchedUrlObj.pathname.replace(/\\/+$/, "");',
-    ),
-  );
   assert.match(
     popupScript,
-    /displayUrl = matchedUrlObj\.hostname \+ matchedPath;/,
+    /displayUrl = formatHostAndPath\(matchedUrlObj\);/,
   );
 });

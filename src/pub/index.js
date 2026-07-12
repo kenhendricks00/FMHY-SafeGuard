@@ -1,3 +1,7 @@
+function formatHostAndPath(urlObj) {
+  return urlObj.hostname + urlObj.pathname.replace(/\/+$/, "");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Popup loaded, preparing to check site status...");
 
@@ -23,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ]);
   const sharedResourceHosts = new Set([
     "github.com",
+    "gist.github.com",
     "raw.githubusercontent.com",
     "gitlab.com",
     "codeberg.org",
@@ -309,18 +314,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (currentPathParts.length >= 2) {
                   displayUrl = `${currentUrlObj.hostname}/${currentPathParts[0]}/${currentPathParts[1]}`;
                 } else {
-                  displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
+                  displayUrl = formatHostAndPath(matchedUrlObj);
                 }
               } else {
-                displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
+                displayUrl = formatHostAndPath(matchedUrlObj);
               }
             }
           } else if (isSharedResourceHost) {
-            displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
+            displayUrl = formatHostAndPath(matchedUrlObj);
           } else {
             // Preserve a canonical FMHY resource path without a trailing slash.
-            const matchedPath = matchedUrlObj.pathname.replace(/\/+$/, "");
-            displayUrl = matchedUrlObj.hostname + matchedPath;
+            displayUrl = formatHostAndPath(matchedUrlObj);
           }
         } catch (e) {
           console.error("Error formatting matched URL:", e);
@@ -338,10 +342,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (pathParts.length >= 2) {
             displayUrl = `${urlObj.hostname}/${pathParts[0]}/${pathParts[1]}`;
           } else {
-            displayUrl = urlObj.hostname + urlObj.pathname;
+            displayUrl = formatHostAndPath(urlObj);
           }
         } else if (isSharedResourceHost) {
-          displayUrl = urlObj.hostname + urlObj.pathname;
+          displayUrl = formatHostAndPath(urlObj);
         } else {
           // For regular sites, just show the hostname
           displayUrl = urlObj.hostname;

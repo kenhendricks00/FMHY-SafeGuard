@@ -83,6 +83,7 @@ const notesBaseURL =
   "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
 const sharedResourceHosts = new Set([
   "github.com",
+  "gist.github.com",
   "raw.githubusercontent.com",
   "gitlab.com",
   "codeberg.org",
@@ -618,8 +619,13 @@ function extractStarredUrlsFromMarkdown(markdown) {
   for (const line of markdown.split("\n")) {
     if (!line.includes("⭐")) continue;
 
-    const boldSections = line.match(/\*\*.*?\*\*/g) || [];
-    for (const section of boldSections) {
+    const descriptionSeparator = line.search(/\s+-\s+/);
+    const resourceGroup =
+      descriptionSeparator === -1 ? null : line.slice(0, descriptionSeparator);
+    const sections = resourceGroup
+      ? [resourceGroup]
+      : line.match(/\*\*.*?\*\*/g) || [];
+    for (const section of sections) {
       const links = section.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g);
       for (const match of links) {
         starredUrls.push(match[1]);
@@ -747,6 +753,12 @@ function urlMatchesListedResource(currentUrl, listedUrl) {
 
   const currentPath = current.pathname.replace(/\/+$/, "").toLowerCase();
   const listedPath = listed.pathname.replace(/\/+$/, "").toLowerCase();
+  const isGistPlatformPage =
+    currentHost === "gist.github.com" &&
+    ["/starred", "/discover"].includes(currentPath) &&
+    listedHost === "gist.github.com" &&
+    !listedPath;
+  if (isGistPlatformPage) return true;
   const isEnteAuthRedirect =
     currentHost === "auth.ente.com" &&
     currentPath === "/login" &&

@@ -7,6 +7,7 @@
 - Distinguished starred Ente Auth redirects as canonical `ente.com/auth` resources instead of the safe Ente homepage.
 - Scoped Linktree classifications to individual profiles so unsafe resources cannot inherit the starred root status.
 - Prevented toolbar icons from falling back to root-domain status on shared hosts.
+- Removed trailing slashes from root-only popup labels and restored starred GitHub Gists and GitLab Snippets alternatives.
 - Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
 - Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
 - Added path-aware unsafe reasons for repository and link-aggregator resources.
