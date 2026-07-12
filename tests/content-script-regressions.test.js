@@ -174,3 +174,18 @@ test("path-specific reasons can classify otherwise unmatched URLs", () => {
     /if \(status === "no_data" && pathSpecificReason\)/,
   );
 });
+
+test("the popup uses the neutral icon when a site is not in FMHY", () => {
+  assert.match(
+    popupScript,
+    /no_data: "\.\.\/res\/icons\/default\.png"/,
+  );
+  assert.match(
+    popupScript,
+    /unknown: "\.\.\/res\/icons\/default\.png"/,
+  );
+  assert.match(
+    popupScript,
+    /statusIcon\.alt = status === "no_data" \? "Not listed in FMHY" : "Site status"/,
+  );
+});

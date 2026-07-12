@@ -462,12 +462,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       starred: "../res/icons/starred.png",
       browser_page: "../res/ext_icon_144.png",
       extension_page: "../res/ext_icon_144.png",
-      no_data: "../res/ext_icon_144.png",
+      no_data: "../res/icons/default.png",
       error: "../res/icons/error.png",
-      unknown: "../res/ext_icon_144.png",
+      unknown: "../res/icons/default.png",
     };
 
     statusIcon.src = icons[status] || icons["unknown"];
+    statusIcon.alt = status === "no_data" ? "Not listed in FMHY" : "Site status";
     statusMessage.innerHTML = message || "An unknown error occurred.";
 
     statusIcon.classList.add("active");

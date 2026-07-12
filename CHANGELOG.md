@@ -5,6 +5,7 @@
 - Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
 - Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
 - Added path-aware unsafe reasons for repository and link-aggregator resources.
+- Replaced the branded popup icon with a neutral status icon when a site is not listed in FMHY.
 
 ## v1.3.7 (07/10/2026)
 
