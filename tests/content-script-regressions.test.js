@@ -408,3 +408,10 @@ test("path-specific unsafe reasons also update the toolbar icon", () => {
     /updatePageAction\(status, tabId\);/,
   );
 });
+
+test("the popup identifies the current hostname for inherited domain status", () => {
+  assert.match(
+    popupScript,
+    /\/\/ For regular sites, show the hostname currently being visited\s*displayUrl = currentUrlObj\.hostname;/,
+  );
+});
