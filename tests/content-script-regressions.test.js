@@ -625,6 +625,21 @@ test("live resource data preserves query and fragment identities", () => {
   );
 });
 
+test("status checks wait for list initialization", () => {
+  assert.match(
+    backgroundScript,
+    /let initializationPromise = null;/,
+  );
+  assert.match(
+    backgroundScript,
+    /if \(initializationPromise\) await initializationPromise;/,
+  );
+  assert.match(
+    backgroundScript,
+    /initializationPromise = initializeExtension\(\);/,
+  );
+});
+
 test("the toolbar does not inherit root status on shared hosts", () => {
   assert.match(
     backgroundScript,

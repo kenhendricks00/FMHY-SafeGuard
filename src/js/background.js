@@ -134,6 +134,7 @@ const redirectOrigins = new Map(); // Navigation-scoped redirect origins per tab
 const notesCache = new Map(); // Cache for fetched notes
 let userTrustedDomains = new Set(); // User-defined trusted domains
 let userUntrustedDomains = new Set(); // User-defined untrusted domains
+let initializationPromise = null;
 
 // Base64 Starred Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
 const base64StarredLinksEncoded = [
@@ -1158,6 +1159,7 @@ async function notifySettingsPage() {
 
 // Site Status Checking
 async function checkSiteAndUpdatePageAction(tabId, url) {
+  if (initializationPromise) await initializationPromise;
   console.log(
     `checkSiteAndUpdatePageAction: Checking status for ${url} on tab ${tabId}`
   );
@@ -1338,6 +1340,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getSiteStatus") {
     (async () => {
       try {
+        if (initializationPromise) await initializationPromise;
         // Get the URL from the message
         const url = message.url;
         if (!url) {
@@ -1901,4 +1904,4 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-initializeExtension();
+initializationPromise = initializeExtension();
