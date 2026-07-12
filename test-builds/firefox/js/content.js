@@ -48,6 +48,19 @@ let userTrusted = new Set();
 let userUntrusted = new Set();
 let unsafeReasons = {};
 
+function setUnsafeBadgeContent(badge, reason) {
+  badge.replaceChildren();
+  const icon = document.createElement("span");
+  icon.style.cssText = "display: inline-block; font-size: 14px;";
+  icon.textContent = "⚠️";
+  badge.append(
+    icon,
+    document.createTextNode(
+      ` FMHY Unsafe Site${reason ? `: ${reason}` : ""}`,
+    ),
+  );
+}
+
 // Search engines where highlighting should be applied
 const searchEngines = [
   "google.com",
@@ -309,8 +322,7 @@ function setupObserver() {
                 const badge = document.createElement('span');
                 badge.className = 'fmhy-unsafe-badge';
                 const reason = getReasonForDomain(linkDomain);
-                const reasonText = reason ? `: ${reason}` : "";
-                badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
+                setUnsafeBadgeContent(badge, reason);
                 badge.dataset.domain = linkDomain;
                 siteDiv.appendChild(badge);
               }
@@ -527,8 +539,7 @@ function addWarningBanner(link, reason = null) {
         if (!siteDiv.querySelector('.fmhy-unsafe-badge')) {
           const badge = document.createElement('span');
           badge.className = 'fmhy-unsafe-badge';
-          const reasonText = reason ? `: ${reason}` : "";
-          badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
+          setUnsafeBadgeContent(badge, reason);
           siteDiv.appendChild(badge);
         }
       }
@@ -557,8 +568,7 @@ function addWarningBanner(link, reason = null) {
   });
 
   // Add the warning icon and text
-  const reasonText = reason ? `: ${reason}` : "";
-  badge.innerHTML = `<span style="display: inline-block; font-size: 14px;">⚠️</span> FMHY Unsafe Site${reasonText}`;
+  setUnsafeBadgeContent(badge, reason);
 
   // Google-specific margin adjustment
   if (currentDomain.includes("google")) {

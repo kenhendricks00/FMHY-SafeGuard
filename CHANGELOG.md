@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.3.8 (07/12/2026)
+
+#### **🔧 Enhancements**
+- Checked every changed tab URL immediately so status and toolbar icons update before page completion, with earlier warning redirects for unsafe sites.
+- Preserved resource paths in popup status labels for Codeberg, Rentry, and other shared hosts.
+- Removed trailing slashes from root-only popup labels.
+- Matched Greasy Fork script redirects by their stable numeric script ID.
+- Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
+- Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
+- Replaced the branded popup icon with a neutral status icon when a site is not listed in FMHY.
+
+#### **🐞 Bug Fixes**
+- Required real URL and hostname boundaries when matching filter-list entries.
+- Rendered unsafe reasons as text and safe links instead of injecting remote HTML.
+- Parsed Markdown autolinks such as `<https://rentry.co/...>` as FMHY resources and mapped them to their guide sections.
+- Kept toolbar icons aligned with path-specific unsafe classifications shown in the popup.
+- Distinguished starred Ente Auth redirects as canonical `ente.com/auth` resources instead of the safe Ente homepage.
+- Scoped Linktree classifications to individual profiles so unsafe resources cannot inherit the starred root status.
+- Prevented toolbar icons from falling back to root-domain status on shared hosts.
+- Restored starred GitHub Gists and GitLab Snippets alternatives.
+- Scoped additional multi-tenant platforms by path, query, and fragment identifiers.
+- Added path-aware unsafe reasons for repository and link-aggregator resources.
+- Made starred and safe matching resource-aware so shared hosts and sibling repositories cannot inherit each other's status.
+
 ## v1.3.7 (07/10/2026)
 
 #### **🚀 New Features**

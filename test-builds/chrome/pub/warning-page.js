@@ -11,15 +11,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Display reason for unsafe site - prefer URL parameter, fallback to storage
   let reason = reasonFromUrl ? decodeURIComponent(reasonFromUrl) : null;
 
-  // Helper function to convert URLs to clickable links
-  function formatReasonWithLinks(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+  function renderTextWithLinks(container, text) {
+    container.replaceChildren();
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    let lastIndex = 0;
+
+    for (const match of text.matchAll(urlRegex)) {
+      container.append(document.createTextNode(text.slice(lastIndex, match.index)));
+      const url = match[0];
+      const link = document.createElement("a");
+      link.href = url;
+      link.textContent = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      container.append(link);
+      lastIndex = match.index + url.length;
+    }
+
+    container.append(document.createTextNode(text.slice(lastIndex)));
   }
 
   if (reason) {
     console.log("Reason provided via URL parameter");
-    document.getElementById("reasonText").innerHTML = formatReasonWithLinks(reason);
+    renderTextWithLinks(document.getElementById("reasonText"), reason);
     document.getElementById("reasonContainer").style.display = "block";
   } else {
     // Fallback: try to fetch from storage
@@ -52,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Found reason:", reason ? "yes" : "no");
 
         if (reason) {
-          document.getElementById("reasonText").innerHTML = formatReasonWithLinks(reason);
+          renderTextWithLinks(document.getElementById("reasonText"), reason);
           document.getElementById("reasonContainer").style.display = "block";
         }
       } else {

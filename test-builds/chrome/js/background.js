@@ -81,6 +81,42 @@ const unsafeReasonsURL =
   "https://raw.githubusercontent.com/fmhy/FMHYFilterlist/refs/heads/main/filterlists-reasons.json";
 const notesBaseURL =
   "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
+const resourceIdentityVersion = 2;
+const sharedResourceHosts = new Set([
+  "github.com",
+  "gist.github.com",
+  "raw.githubusercontent.com",
+  "greasyfork.org",
+  "youtube.com",
+  "chromewebstore.google.com",
+  "colab.research.google.com",
+  "modrinth.com",
+  "f-droid.org",
+  "xdaforums.com",
+  "start.me",
+  "sites.google.com",
+  "matrix.to",
+  "codepen.io",
+  "vk.com",
+  "gitlab.com",
+  "codeberg.org",
+  "sourceforge.net",
+  "linktr.ee",
+  "rentry.co",
+  "rentry.org",
+  "pastebin.com",
+  "archive.org",
+  "drive.google.com",
+  "docs.google.com",
+  "discord.com",
+  "discord.gg",
+  "t.me",
+  "mega.nz",
+  "mediafire.com",
+  "gofile.io",
+  "pixeldrain.com",
+  "huggingface.co",
+]);
 
 // State Variables
 let unsafeSitesRegex = null;
@@ -459,22 +495,33 @@ const notesPatterns = [
 const sitePasswords = {
   "cs.rin.ru": "cs.rin.ru",
   "csrin.org": "csrin.org",
+  "steamrip.com": "steamrip.com",
   "online-fix.me": "online-fix.me",
   "ovagames.com": "www.ovagames.com",
   "g4u.to": "404",
   "elenemigos.com": "elenemigos.com",
   "triahgames.com": "www.triahgames.com",
   "soft98.ir": "soft98.ir",
+  "iptv.watchott.ru": "FREE-MEDIA",
+};
+
+// Passwords for resources that share a host and must be matched by URL.
+const siteUrlPasswords = {
+  "https://rentry.co/fmhyb64#gnarly": "gnarly",
+  "https://rentry.co/fmhyb64#alvro": "ByAlvRo",
 };
 
 // Hardcoded site invite codes - Maps domains to their invite codes
 const siteInviteCodes = {
   "ee3.me": "mpgh",
-  "rips.cc": "mpgh",
+  "rips.cc": "1hack",
 };
 
 // Get password for a domain
-function getPasswordForDomain(hostname) {
+function getPasswordForDomain(hostname, url = "") {
+  const urlPassword = siteUrlPasswords[url.toLowerCase().replace(/\/$/, "")];
+  if (urlPassword) return urlPassword;
+
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   return sitePasswords[domain] || null;
 }
@@ -528,6 +575,31 @@ async function getReasonForDomain(hostname) {
   return null;
 }
 
+function getReasonKeyForUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace(/^www\./, "").toLowerCase();
+    const pathname = urlObj.pathname.replace(/\/+$/, "").toLowerCase();
+    return pathname ? `${domain}${pathname}` : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function getReasonForUrl(url) {
+  const reasonKey = getReasonKeyForUrl(url);
+  if (!reasonKey) return null;
+
+  const hostname = new URL(url).hostname;
+  await getReasonForDomain(hostname);
+
+  const matchedKey = Object.keys(unsafeReasons)
+    .filter((key) => key.includes("/") && (reasonKey === key || reasonKey.startsWith(`${key}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+
+  return matchedKey ? unsafeReasons[matchedKey] : null;
+}
+
 // Fetch note content from GitHub
 async function fetchNoteContent(noteSlug) {
   // Check cache first
@@ -550,7 +622,7 @@ async function fetchNoteContent(noteSlug) {
   }
 }
 function extractUrlsFromMarkdown(markdown) {
-  const urlRegex = /https?:\/\/[^\s)]+/g;
+  const urlRegex = /https?:\/\/[^\s)>]+/g;
   return markdown.match(urlRegex) || [];
 }
 
@@ -560,8 +632,13 @@ function extractStarredUrlsFromMarkdown(markdown) {
   for (const line of markdown.split("\n")) {
     if (!line.includes("⭐")) continue;
 
-    const boldSections = line.match(/\*\*.*?\*\*/g) || [];
-    for (const section of boldSections) {
+    const descriptionSeparator = line.search(/\s+-\s+/);
+    const resourceGroup =
+      descriptionSeparator === -1 ? null : line.slice(0, descriptionSeparator);
+    const sections = resourceGroup
+      ? [resourceGroup]
+      : line.match(/\*\*.*?\*\*/g) || [];
+    for (const section of sections) {
       const links = section.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g);
       for (const match of links) {
         starredUrls.push(match[1]);
@@ -594,13 +671,16 @@ function extractFmhyResourceMap(markdown, guideUrl) {
     for (const match of line.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g)) {
       resourceMap[match[1]] = sectionUrl;
     }
+    for (const match of line.matchAll(/<(https?:\/\/[^>\s]+)>/g)) {
+      resourceMap[match[1]] = sectionUrl;
+    }
   }
 
   return resourceMap;
 }
 
 function getFmhyUrlForMatch(matchedUrl) {
-  const normalizedUrl = normalizeUrl(matchedUrl);
+  const normalizedUrl = normalizeResourceUrl(matchedUrl);
   if (!normalizedUrl) return null;
   return fmhyResourceMap[normalizedUrl] || null;
 }
@@ -664,6 +744,101 @@ function normalizeUrl(url) {
   }
 }
 
+function normalizeResourceUrl(url) {
+  const normalized = normalizeUrl(url);
+  if (!normalized) return null;
+
+  try {
+    const source = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const sourceObj = new URL(source);
+    const normalizedObj = new URL(normalized);
+    normalizedObj.search = sourceObj.search;
+    normalizedObj.hash = sourceObj.hash;
+    return normalizedObj.href;
+  } catch (error) {
+    console.warn(`Invalid resource URL skipped: ${url} - ${error.message}`);
+    return null;
+  }
+}
+
+function isSharedResourceHost(hostname) {
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+  for (const host of sharedResourceHosts) {
+    if (domain === host || domain.endsWith(`.${host}`)) return true;
+  }
+  return false;
+}
+
+function urlMatchesListedResource(currentUrl, listedUrl) {
+  const normalizedCurrent = normalizeResourceUrl(currentUrl);
+  const normalizedListed = normalizeResourceUrl(listedUrl);
+  if (!normalizedCurrent || !normalizedListed) return false;
+
+  const current = new URL(normalizedCurrent);
+  const listed = new URL(normalizedListed);
+  const currentHost = current.hostname.replace(/^www\./, "").toLowerCase();
+  const listedHost = listed.hostname.replace(/^www\./, "").toLowerCase();
+  const sharedHost = isSharedResourceHost(currentHost) || isSharedResourceHost(listedHost);
+  const hostMatches = sharedHost
+    ? currentHost === listedHost
+    : currentHost === listedHost || currentHost.endsWith(`.${listedHost}`);
+  if (!hostMatches) return false;
+
+  const currentPath = current.pathname.replace(/\/+$/, "").toLowerCase();
+  const listedPath = listed.pathname.replace(/\/+$/, "").toLowerCase();
+  const currentGreasyForkScript = currentPath.match(
+    /^\/(?:[^/]+\/)?scripts\/(\d+)/
+  );
+  const listedGreasyForkScript = listedPath.match(
+    /^\/(?:[^/]+\/)?scripts\/(\d+)/
+  );
+  if (
+    currentHost === "greasyfork.org" &&
+    listedHost === "greasyfork.org" &&
+    currentGreasyForkScript?.[1] === listedGreasyForkScript?.[1]
+  ) {
+    return true;
+  }
+  const isGistPlatformPage =
+    currentHost === "gist.github.com" &&
+    ["/starred", "/discover"].includes(currentPath) &&
+    listedHost === "gist.github.com" &&
+    !listedPath;
+  if (isGistPlatformPage) return true;
+  const isEnteAuthRedirect =
+    currentHost === "auth.ente.com" &&
+    currentPath === "/login" &&
+    listedHost === "ente.com" &&
+    listedPath === "/auth";
+  if (isEnteAuthRedirect) return true;
+  const pathMatches = !listedPath
+    ? !sharedHost || !currentPath
+    : currentPath === listedPath || currentPath.startsWith(`${listedPath}/`);
+  if (!pathMatches) return false;
+
+  const queryIdentifiesResource = ["youtube.com", "archive.org"].includes(
+    listedHost
+  );
+  if (queryIdentifiesResource) {
+    for (const [key, value] of listed.searchParams) {
+      if (current.searchParams.get(key) !== value) return false;
+    }
+  }
+  const fragmentIdentifiesResource = [
+    "rentry.co",
+    "rentry.org",
+    "matrix.to",
+  ].includes(listedHost);
+  if (
+    fragmentIdentifiesResource &&
+    listed.hash &&
+    current.hash.toLowerCase() !== listed.hash.toLowerCase()
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function extractRootUrl(url) {
   if (!url) {
     console.warn("Received null or undefined URL for root extraction.");
@@ -680,10 +855,15 @@ function extractRootUrl(url) {
 }
 
 function generateRegexFromList(list) {
-  const escapedList = list.map((domain) =>
-    domain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  );
-  return new RegExp(`(${escapedList.join("|")})`, "i");
+  if (!list.length) return /(?!)/;
+
+  const boundedPatterns = list.map((entry) => {
+    const escaped = entry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return entry.includes("://")
+      ? `^${escaped}(?=$|[/?#])`
+      : `(?:^|\\.)${escaped}$`;
+  });
+  return new RegExp(`(?:${boundedPatterns.join("|")})`, "i");
 }
 
 function extractUrlsFromFilterList(text) {
@@ -830,7 +1010,7 @@ async function fetchSafeSites() {
         const guideUrl = `https://fmhy.net/${guideName}`;
         const guideMap = extractFmhyResourceMap(markdown, guideUrl);
         for (const [resourceUrl, fmhyUrl] of Object.entries(guideMap)) {
-          const normalizedResourceUrl = normalizeUrl(resourceUrl);
+          const normalizedResourceUrl = normalizeResourceUrl(resourceUrl);
           if (normalizedResourceUrl) fmhyResourceMap[normalizedResourceUrl] = fmhyUrl;
         }
       } else {
@@ -839,13 +1019,16 @@ async function fetchSafeSites() {
     }
 
     // Normalize URLs and remove duplicates
-    safeSites = [...new Set(allUrls.map((url) => normalizeUrl(url.trim())))];
+    safeSites = [
+      ...new Set(allUrls.map((url) => normalizeResourceUrl(url.trim()))),
+    ].filter((url) => url !== null);
 
     // Store safe sites for content script use
     await browserAPI.storage.local.set({
       safeSiteCount: safeSites.length,
       safeSiteList: safeSites,
       fmhyResourceMap,
+      resourceIdentityVersion,
     });
 
     console.log("Stored safe site count:", safeSites.length);
@@ -877,7 +1060,7 @@ async function fetchStarredSites() {
     starredSites = Array.from(
       new Set(
         starredUrls
-          .map((url) => normalizeUrl(url))
+          .map((url) => normalizeResourceUrl(url))
           .filter((url) => url !== null)
       )
     );
@@ -885,6 +1068,7 @@ async function fetchStarredSites() {
     await browserAPI.storage.local.set({
       starredSites,
       starredSiteCount: starredSites.length,
+      resourceIdentityVersion,
     });
 
     console.log(`Stored ${starredSites.length} starred sites`);
@@ -946,7 +1130,7 @@ async function notifySettingsPage() {
 }
 
 // Site Status Checking
-function checkSiteAndUpdatePageAction(tabId, url) {
+async function checkSiteAndUpdatePageAction(tabId, url) {
   console.log(
     `checkSiteAndUpdatePageAction: Checking status for ${url} on tab ${tabId}`
   );
@@ -957,7 +1141,11 @@ function checkSiteAndUpdatePageAction(tabId, url) {
   }
 
   const normalizedUrl = normalizeUrl(url.trim());
+  const resourceUrl = normalizeResourceUrl(url.trim());
   const rootUrl = extractRootUrl(normalizedUrl);
+  const requiresResourcePath = normalizedUrl
+    ? isSharedResourceHost(new URL(normalizedUrl).hostname)
+    : false;
 
   // Detect if the URL is an internal extension page (settings page or warning page)
   const extUrlBase = browserAPI.runtime.getURL("");
@@ -973,22 +1161,30 @@ function checkSiteAndUpdatePageAction(tabId, url) {
   let matchedUrl = normalizedUrl;
 
   // First check the full URL
-  status = getStatusFromLists(normalizedUrl);
+  status = getStatusFromLists(resourceUrl);
 
   // If not found, try with trailing slash
-  if (status === "no_data" && !normalizedUrl.endsWith("/")) {
+  if (
+    status === "no_data" &&
+    !requiresResourcePath &&
+    !normalizedUrl.endsWith("/")
+  ) {
     status = getStatusFromLists(normalizedUrl + "/");
     if (status !== "no_data") matchedUrl = normalizedUrl + "/";
   }
 
   // If not found, try without trailing slash
-  if (status === "no_data" && normalizedUrl.endsWith("/")) {
+  if (
+    status === "no_data" &&
+    !requiresResourcePath &&
+    normalizedUrl.endsWith("/")
+  ) {
     status = getStatusFromLists(normalizedUrl.slice(0, -1));
     if (status !== "no_data") matchedUrl = normalizedUrl.slice(0, -1);
   }
 
   // If still no match, check the root URL
-  if (status === "no_data") {
+  if (status === "no_data" && !requiresResourcePath) {
     status = getStatusFromLists(rootUrl);
     if (status !== "no_data") matchedUrl = rootUrl;
 
@@ -997,6 +1193,13 @@ function checkSiteAndUpdatePageAction(tabId, url) {
       status = getStatusFromLists(rootUrl + "/");
       if (status !== "no_data") matchedUrl = rootUrl + "/";
     }
+  }
+
+  // A path-specific reason can classify a resource even when it is absent from
+  // the domain filter lists. Keep the toolbar icon aligned with the popup.
+  if (status === "no_data" && await getReasonForUrl(url)) {
+    status = "unsafe";
+    matchedUrl = normalizedUrl;
   }
 
   // Apply the correct icon status to the tab
@@ -1109,7 +1312,8 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Normalize the URL
         const normalizedUrl = normalizeUrl(url);
-        if (!normalizedUrl) {
+        const resourceUrl = normalizeResourceUrl(url);
+        if (!normalizedUrl || !resourceUrl) {
           sendResponse({ status: "no_data", matchedUrl: null });
           return;
         }
@@ -1124,10 +1328,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
 
-        // Special handling for repository sites
-        const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
-          (d) => urlObj.hostname === d || urlObj.hostname.endsWith("." + d)
-        );
+        const requiresResourcePath = isSharedResourceHost(domain);
 
         // Variables to track status and matched URL
         let status = "no_data";
@@ -1143,39 +1344,22 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else if (fmhySitesRegex?.test(normalizedUrl)) {
           status = "fmhy";
           matchedUrl = normalizedUrl;
-        } else if (starredSites.includes(normalizedUrl)) {
+        } else if ((matchedUrl = starredSites.find((listedUrl) =>
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "starred";
-          matchedUrl = normalizedUrl;
-        } else if (safeSites.includes(normalizedUrl)) {
+        } else if ((matchedUrl = safeSites.find((listedUrl) =>
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "safe";
-          matchedUrl = normalizedUrl;
-        } else if (base64StarredLinks.some(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl))) {
+        } else if ((matchedUrl = base64StarredLinks.find((listedUrl) =>
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "starred";
-          matchedUrl = normalizedUrl;
-        } else if (base64DecodedLinks.some(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl))) {
+        } else if ((matchedUrl = base64DecodedLinks.find((listedUrl) =>
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "safe";
-          matchedUrl = normalizedUrl;
         }
 
-        // If no match for full URL and it's a repository site, check Base64 links then return
-        if (status === "no_data" && isRepoSite) {
-          const base64StarredMatch = base64StarredLinks.find(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl));
-          if (base64StarredMatch) {
-            sendResponse({ status: "starred", matchedUrl: base64StarredMatch });
-            return;
-          }
-          const base64Match = base64DecodedLinks.find(link => normalizedUrl.startsWith(link) || link.startsWith(normalizedUrl));
-          if (base64Match) {
-            sendResponse({ status: "safe", matchedUrl: base64Match });
-            return;
-          }
-          console.log(`No match for repository URL: ${normalizedUrl}`);
-          sendResponse({ status: "no_data", matchedUrl: normalizedUrl });
-          return;
-        }
-
-        // If no match for full URL and it's a regular site, try domain-level matching
-        if (status === "no_data" && !isRepoSite) {
+        // Shared hosts require a matching resource path; normal sites can use domain rules.
+        if (status === "no_data" && !requiresResourcePath) {
           console.log(`No match for full URL, trying domain: ${domain}`);
 
           // Check domain against regex patterns (use hostname-only regex for domain matching)
@@ -1187,79 +1371,22 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
             status = "potentially_unsafe";
             matchedUrl = `https://${domain}`;
           }
+        }
 
-          // Check domain against starred and safe lists
-          if (status === "no_data") {
-            for (const starredUrl of starredSites) {
-              try {
-                const starredUrlObj = new URL(starredUrl);
-                if (starredUrlObj.hostname === domain) {
-                  status = "starred";
-                  matchedUrl = starredUrl;
-                  break;
-                }
-              } catch (e) {
-                continue;
-              }
-            }
-          }
-
-          if (status === "no_data") {
-            for (const safeUrl of safeSites) {
-              try {
-                const safeUrlObj = new URL(safeUrl);
-                if (safeUrlObj.hostname === domain) {
-                  status = "safe";
-                  matchedUrl = safeUrl;
-                  break;
-                }
-              } catch (e) {
-                continue;
-              }
-            }
-          }
-
-          // Check Base64 starred links by domain first
-          if (status === "no_data") {
-            for (const b64Url of base64StarredLinks) {
-              try {
-                const b64UrlObj = new URL(b64Url);
-                if (b64UrlObj.hostname === domain) {
-                  status = "starred";
-                  matchedUrl = b64Url;
-                  break;
-                }
-              } catch (e) {
-                continue;
-              }
-            }
-          }
-
-          // Check Base64 decoded links by domain
-          if (status === "no_data") {
-            for (const b64Url of base64DecodedLinks) {
-              try {
-                const b64UrlObj = new URL(b64Url);
-                if (b64UrlObj.hostname === domain) {
-                  status = "safe";
-                  matchedUrl = b64Url;
-                  break;
-                }
-              } catch (e) {
-                continue;
-              }
-            }
-          }
+        const pathSpecificReason = await getReasonForUrl(url);
+        if (status === "no_data" && pathSpecificReason) {
+          status = "unsafe";
+          matchedUrl = normalizedUrl;
         }
 
         // Get reason if unsafe
         let reason = null;
         if (status === "unsafe" || status === "potentially_unsafe") {
-          reason = await getReasonForDomain(domain);
+          reason = pathSpecificReason || await getReasonForDomain(domain);
         }
 
         // Get password if available
-        const password = getPasswordForDomain(domain);
+        const password = getPasswordForDomain(domain, url);
 
         // Get invite code if available
         const inviteCode = getInviteCodeForDomain(domain);
@@ -1347,78 +1474,22 @@ function getStatusFromLists(url) {
     if (userUntrustedDomains.has(normalizedDomain)) {
       return "unsafe";
     }
-    const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
-      (domain) =>
-        urlObj.hostname === domain || urlObj.hostname.endsWith("." + domain)
-    );
+    const requiresResourcePath = isSharedResourceHost(domain);
 
-    // For repository sites, need exact path matching
-    if (isRepoSite) {
-      // Check unsafe and potentially unsafe first
-      if (unsafeSitesRegex?.test(url)) return "unsafe";
-      if (potentiallyUnsafeSitesRegex?.test(url)) return "potentially_unsafe";
-      if (fmhySitesRegex?.test(url)) return "fmhy";
-      if (starredSites.includes(url)) return "starred";
-      if (safeSites.includes(url)) return "safe";
-      // Check Base64 starred links first, then safe links (exact URL match for repos)
-      if (base64StarredLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "starred";
-      if (base64DecodedLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "safe";
-      return "no_data"; // No domain-only matches for repos
-    }
-
-    // For normal sites, direct checks first (full URL)
     if (unsafeSitesRegex?.test(url)) return "unsafe";
     if (potentiallyUnsafeSitesRegex?.test(url)) return "potentially_unsafe";
     if (fmhySitesRegex?.test(url)) return "fmhy";
-    if (starredSites.includes(url)) return "starred";
-    if (safeSites.includes(url)) return "safe";
-    // Check Base64 starred links first, then safe links
-    if (base64StarredLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "starred";
-    if (base64DecodedLinks.some(link => url.startsWith(link) || link.startsWith(url))) return "safe";
+    if (starredSites.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "starred";
+    if (safeSites.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "safe";
+    if (base64StarredLinks.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "starred";
+    if (base64DecodedLinks.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "safe";
+
+    if (requiresResourcePath) return "no_data";
 
     // Then check domain-level (use hostname-only regex for domain matching)
     // Note: FMHY sites only match exact URLs, not domain-level
     if (unsafeHostnamesRegex?.test(domain)) return "unsafe";
     if (potentiallyUnsafeHostnamesRegex?.test(domain)) return "potentially_unsafe";
-
-    // Try domain-level checks for starred and safe
-    for (const starredUrl of starredSites) {
-      try {
-        const starredUrlObj = new URL(starredUrl);
-        if (starredUrlObj.hostname === domain) return "starred";
-      } catch (e) {
-        continue;
-      }
-    }
-
-    for (const safeUrl of safeSites) {
-      try {
-        const safeUrlObj = new URL(safeUrl);
-        if (safeUrlObj.hostname === domain) return "safe";
-      } catch (e) {
-        continue;
-      }
-    }
-
-    // Check Base64 starred links by domain first
-    for (const b64Url of base64StarredLinks) {
-      try {
-        const b64UrlObj = new URL(b64Url);
-        if (b64UrlObj.hostname === domain) return "starred";
-      } catch (e) {
-        continue;
-      }
-    }
-
-    // Check Base64 decoded links by domain
-    for (const b64Url of base64DecodedLinks) {
-      try {
-        const b64UrlObj = new URL(b64Url);
-        if (b64UrlObj.hostname === domain) return "safe";
-      } catch (e) {
-        continue;
-      }
-    }
 
     return "no_data";
   } catch (e) {
@@ -1458,7 +1529,7 @@ async function openWarningPage(tabId, unsafeUrl) {
   } catch (e) {
     hostname = unsafeUrl.replace(/^https?:\/\//, "").split("/")[0];
   }
-  const reason = await getReasonForDomain(hostname);
+  const reason = await getReasonForUrl(unsafeUrl) || await getReasonForDomain(hostname);
   console.log(`openWarningPage: hostname=${hostname}, reason=${reason ? "found" : "not found"}`);
 
   // Redirect to the warning page if it is enabled in settings
@@ -1484,9 +1555,14 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Listen for tab updates
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    await checkSiteAndUpdatePageAction(tabId, changeInfo.url);
+    return;
+  }
+
   if (changeInfo.status === "complete" && tab.url) {
     // Always check the site status
-    checkSiteAndUpdatePageAction(tabId, tab.url);
+    await checkSiteAndUpdatePageAction(tabId, tab.url);
   }
 });
 
@@ -1593,7 +1669,10 @@ async function initializeExtension() {
           "safeSiteList",
           "fmhyResourceMap",
           "unsafeReasons",
+          "resourceIdentityVersion",
         ]);
+        const hasCurrentResourceIdentity =
+          storedData.resourceIdentityVersion === resourceIdentityVersion;
 
         if (storedData.unsafeSites && storedData.unsafeSites.length > 0) {
           unsafeSitesRegex = generateRegexFromList(storedData.unsafeSites);
@@ -1640,7 +1719,11 @@ async function initializeExtension() {
         }
 
         // Load starred sites from storage
-        if (storedData.starredSites && storedData.starredSites.length > 0) {
+        if (
+          hasCurrentResourceIdentity &&
+          storedData.starredSites &&
+          storedData.starredSites.length > 0
+        ) {
           starredSites = storedData.starredSites;
           console.log(
             `Loaded ${starredSites.length} starred sites from storage`
@@ -1653,7 +1736,11 @@ async function initializeExtension() {
         fmhyResourceMap = storedData.fmhyResourceMap || {};
 
         // Load safe sites and their FMHY guide locations from storage
-        if (storedData.safeSiteList && storedData.safeSiteList.length > 0) {
+        if (
+          hasCurrentResourceIdentity &&
+          storedData.safeSiteList &&
+          storedData.safeSiteList.length > 0
+        ) {
           safeSites = storedData.safeSiteList;
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
           const hasLegacyAnchors = Object.values(fmhyResourceMap).some(
@@ -1670,9 +1757,6 @@ async function initializeExtension() {
         console.error("Error loading from storage:", error);
       }
     }
-
-    // Add fallback known sites - only for safe sites, not for starred
-    addKnownSafeSites();
 
     // Set up the update schedule
     await setupUpdateSchedule();

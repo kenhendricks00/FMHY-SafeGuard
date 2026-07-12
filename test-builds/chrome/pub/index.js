@@ -1,3 +1,32 @@
+function formatHostAndPath(urlObj) {
+  return (
+    urlObj.hostname +
+    urlObj.pathname.replace(/\/+$/, "") +
+    urlObj.search +
+    urlObj.hash
+  );
+}
+
+function renderTextWithLinks(container, text) {
+  container.replaceChildren();
+  const urlRegex = /https?:\/\/[^\s]+/g;
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(urlRegex)) {
+    container.append(document.createTextNode(text.slice(lastIndex, match.index)));
+    const url = match[0];
+    const link = document.createElement("a");
+    link.href = url;
+    link.textContent = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    container.append(link);
+    lastIndex = match.index + url.length;
+  }
+
+  container.append(document.createTextNode(text.slice(lastIndex)));
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Popup loaded, preparing to check site status...");
 
@@ -15,6 +44,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   const warningPageUrl = browserAPI.runtime.getURL("pub/warning-page.html");
   const settingsPageUrl = browserAPI.runtime.getURL("pub/settings-page.html");
   const welcomePageUrl = browserAPI.runtime.getURL("pub/welcome-page.html");
+  const repositoryHosts = new Set([
+    "github.com",
+    "gitlab.com",
+    "codeberg.org",
+    "sourceforge.net",
+  ]);
+  const sharedResourceHosts = new Set([
+    "github.com",
+    "gist.github.com",
+    "raw.githubusercontent.com",
+    "greasyfork.org",
+    "youtube.com",
+    "chromewebstore.google.com",
+    "colab.research.google.com",
+    "modrinth.com",
+    "f-droid.org",
+    "xdaforums.com",
+    "start.me",
+    "sites.google.com",
+    "matrix.to",
+    "codepen.io",
+    "vk.com",
+    "gitlab.com",
+    "codeberg.org",
+    "sourceforge.net",
+    "linktr.ee",
+    "rentry.co",
+    "rentry.org",
+    "pastebin.com",
+    "archive.org",
+    "drive.google.com",
+    "docs.google.com",
+    "discord.com",
+    "discord.gg",
+    "t.me",
+    "mega.nz",
+    "mediafire.com",
+    "gofile.io",
+    "pixeldrain.com",
+    "huggingface.co",
+  ]);
   let fmhyLinkContext = null;
 
   fmhyResourceLink.addEventListener("click", async (event) => {
@@ -261,15 +331,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           const matchedUrlObj = new URL(response.matchedUrl);
           const currentUrlObj = new URL(currentUrl);
-          const isRepoSite = [
-            "github.com",
-            "gitlab.com",
-            "sourceforge.net",
-          ].some(
-            (domain) =>
-              matchedUrlObj.hostname === domain ||
-              matchedUrlObj.hostname.endsWith("." + domain)
-          );
+          const isRepoSite = repositoryHosts.has(matchedUrlObj.hostname);
+          const isSharedResourceHost = sharedResourceHosts.has(matchedUrlObj.hostname);
 
           if (isRepoSite) {
             // For repo sites, extract the domain and path parts that were matched
@@ -288,15 +351,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (currentPathParts.length >= 2) {
                   displayUrl = `${currentUrlObj.hostname}/${currentPathParts[0]}/${currentPathParts[1]}`;
                 } else {
-                  displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
+                  displayUrl = formatHostAndPath(matchedUrlObj);
                 }
               } else {
-                displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
+                displayUrl = formatHostAndPath(matchedUrlObj);
               }
             }
+          } else if (isSharedResourceHost) {
+            displayUrl = formatHostAndPath(matchedUrlObj);
           } else {
-            // For regular sites, just show the hostname from the matched URL
-            displayUrl = matchedUrlObj.hostname;
+            // Preserve a canonical FMHY resource path without a trailing slash.
+            displayUrl = formatHostAndPath(matchedUrlObj);
           }
         } catch (e) {
           console.error("Error formatting matched URL:", e);
@@ -305,10 +370,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         // Fallback to current URL if no match
         const urlObj = new URL(currentUrl);
-        const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
-          (domain) =>
-            urlObj.hostname === domain || urlObj.hostname.endsWith("." + domain)
-        );
+        const isRepoSite = repositoryHosts.has(urlObj.hostname);
+        const isSharedResourceHost = sharedResourceHosts.has(urlObj.hostname);
 
         if (isRepoSite) {
           // For repo sites, extract the domain and first two path segments (user/repo)
@@ -316,8 +379,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (pathParts.length >= 2) {
             displayUrl = `${urlObj.hostname}/${pathParts[0]}/${pathParts[1]}`;
           } else {
-            displayUrl = urlObj.hostname + urlObj.pathname;
+            displayUrl = formatHostAndPath(urlObj);
           }
+        } else if (isSharedResourceHost) {
+          displayUrl = formatHostAndPath(urlObj);
         } else {
           // For regular sites, just show the hostname
           displayUrl = urlObj.hostname;
@@ -356,10 +421,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Handle reason display in dedicated container
     if (reason && (status === "unsafe" || status === "potentially_unsafe")) {
-      // Convert URLs to clickable links
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const formattedReason = reason.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
-      reasonContent.innerHTML = formattedReason;
+      renderTextWithLinks(reasonContent, reason);
       reasonContainer.classList.add("visible");
     } else {
       reasonContainer.classList.remove("visible");
@@ -462,12 +524,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       starred: "../res/icons/starred.png",
       browser_page: "../res/ext_icon_144.png",
       extension_page: "../res/ext_icon_144.png",
-      no_data: "../res/ext_icon_144.png",
+      no_data: "../res/icons/default.png",
       error: "../res/icons/error.png",
-      unknown: "../res/ext_icon_144.png",
+      unknown: "../res/icons/default.png",
     };
 
     statusIcon.src = icons[status] || icons["unknown"];
+    statusIcon.alt = status === "no_data" ? "Not listed in FMHY" : "Site status";
     statusMessage.innerHTML = message || "An unknown error occurred.";
 
     statusIcon.classList.add("active");
