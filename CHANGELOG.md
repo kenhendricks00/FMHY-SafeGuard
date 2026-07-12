@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Check changed tab URLs immediately so unsafe-page warnings appear before page completion.
+- Check every changed tab URL immediately so status and toolbar icons update before page completion, with earlier warning redirects for unsafe sites.
 - Require real URL and hostname boundaries when matching filter-list entries.
 - Render unsafe reasons as text and safe links instead of injecting remote HTML.
 - Parse Markdown autolinks such as `<https://rentry.co/...>` as FMHY resources and map them to their guide sections.
