@@ -393,3 +393,18 @@ test("the popup preserves paths for every shared resource host", () => {
     /displayUrl = matchedUrlObj\.hostname \+ matchedUrlObj\.pathname/,
   );
 });
+
+test("path-specific unsafe reasons also update the toolbar icon", () => {
+  assert.match(
+    backgroundScript,
+    /async function checkSiteAndUpdatePageAction\(tabId, url\)/,
+  );
+  assert.match(
+    backgroundScript,
+    /if \(status === "no_data" && await getReasonForUrl\(url\)\) \{\s*status = "unsafe";/,
+  );
+  assert.match(
+    backgroundScript,
+    /updatePageAction\(status, tabId\);/,
+  );
+});

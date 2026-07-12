@@ -1032,7 +1032,7 @@ async function notifySettingsPage() {
 }
 
 // Site Status Checking
-function checkSiteAndUpdatePageAction(tabId, url) {
+async function checkSiteAndUpdatePageAction(tabId, url) {
   console.log(
     `checkSiteAndUpdatePageAction: Checking status for ${url} on tab ${tabId}`
   );
@@ -1083,6 +1083,13 @@ function checkSiteAndUpdatePageAction(tabId, url) {
       status = getStatusFromLists(rootUrl + "/");
       if (status !== "no_data") matchedUrl = rootUrl + "/";
     }
+  }
+
+  // A path-specific reason can classify a resource even when it is absent from
+  // the domain filter lists. Keep the toolbar icon aligned with the popup.
+  if (status === "no_data" && await getReasonForUrl(url)) {
+    status = "unsafe";
+    matchedUrl = normalizedUrl;
   }
 
   // Apply the correct icon status to the tab

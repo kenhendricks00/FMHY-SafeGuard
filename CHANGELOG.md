@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Preserved resource paths in popup status labels for Codeberg, Rentry, and other shared hosts.
+- Kept toolbar icons aligned with path-specific unsafe classifications shown in the popup.
 - Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
 - Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
 - Added path-aware unsafe reasons for repository and link-aggregator resources.
