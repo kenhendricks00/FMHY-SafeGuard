@@ -166,6 +166,13 @@ test("Markdown autolinks are extracted without angle brackets", () => {
   );
 });
 
+test("unsafe navigation is checked as soon as the tab URL changes", () => {
+  assert.match(
+    backgroundScript,
+    /tabs\.onUpdated\.addListener\(async \(tabId, changeInfo, tab\) => \{\s*if \(changeInfo\.url\) \{\s*await checkSiteAndUpdatePageAction\(tabId, changeInfo\.url\);\s*return;/,
+  );
+});
+
 test("filter-list regexes require URL and hostname boundaries", () => {
   const generateRegexFromList = loadFunction(
     backgroundScript,

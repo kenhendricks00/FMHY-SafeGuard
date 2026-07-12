@@ -1555,9 +1555,14 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Listen for tab updates
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    await checkSiteAndUpdatePageAction(tabId, changeInfo.url);
+    return;
+  }
+
   if (changeInfo.status === "complete" && tab.url) {
     // Always check the site status
-    checkSiteAndUpdatePageAction(tabId, tab.url);
+    await checkSiteAndUpdatePageAction(tabId, tab.url);
   }
 });
 
