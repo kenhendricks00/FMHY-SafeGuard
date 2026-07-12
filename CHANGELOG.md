@@ -9,10 +9,7 @@
 - Prevented toolbar icons from falling back to root-domain status on shared hosts.
 - Removed trailing slashes from root-only popup labels and restored starred GitHub Gists and GitLab Snippets alternatives.
 - Scoped additional multi-tenant platforms by path, query, and fragment identifiers.
-- Preserved FMHY status across canonical same-resource and navigation-scoped cross-domain redirects.
-- Prevented popup and toolbar checks from running before live list initialization completes.
-- Added a Firefox-compatible redirect tracker when `webNavigation.onBeforeRedirect` is unavailable.
-- Used Firefox `webRequest` main-frame redirect events when navigation commits omit the source URL.
+- Matched Greasy Fork script redirects by their stable numeric script ID.
 - Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
 - Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
 - Added path-aware unsafe reasons for repository and link-aggregator resources.

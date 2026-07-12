@@ -287,7 +287,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         response = await browserAPI.runtime.sendMessage({
           action: "getSiteStatus",
           url: currentUrl,
-          tabId: activeTab.id,
         });
       } catch (msgError) {
         console.warn("Message send failed, retrying...", msgError);
@@ -296,7 +295,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         response = await browserAPI.runtime.sendMessage({
           action: "getSiteStatus",
           url: currentUrl,
-          tabId: activeTab.id,
         });
       }
 

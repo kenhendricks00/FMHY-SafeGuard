@@ -130,12 +130,9 @@ let starredSites = [];
 let fmhyResourceMap = {};
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
-const redirectOrigins = new Map(); // Navigation-scoped redirect origins per tab
-const pendingNavigationOrigins = new Map(); // Firefox redirect fallback origins
 const notesCache = new Map(); // Cache for fetched notes
 let userTrustedDomains = new Set(); // User-defined trusted domains
 let userUntrustedDomains = new Set(); // User-defined untrusted domains
-let initializationPromise = null;
 
 // Base64 Starred Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
 const base64StarredLinksEncoded = [
@@ -761,40 +758,6 @@ function normalizeResourceUrl(url) {
   }
 }
 
-function getRedirectOrigin(tabId, currentUrl) {
-  if (!Number.isInteger(tabId)) return null;
-  const redirect = redirectOrigins.get(tabId);
-  if (!redirect || Date.now() - redirect.createdAt > 2 * 60 * 1000) {
-    redirectOrigins.delete(tabId);
-    return null;
-  }
-  return normalizeResourceUrl(redirect.targetUrl) === normalizeResourceUrl(currentUrl)
-    ? redirect.originUrl
-    : null;
-}
-
-function getListedResourceStatus(url) {
-  let matchedUrl = starredSites.find((listedUrl) =>
-    urlMatchesListedResource(url, listedUrl)
-  );
-  if (matchedUrl) return { status: "starred", matchedUrl };
-
-  matchedUrl = safeSites.find((listedUrl) =>
-    urlMatchesListedResource(url, listedUrl)
-  );
-  if (matchedUrl) return { status: "safe", matchedUrl };
-
-  matchedUrl = base64StarredLinks.find((listedUrl) =>
-    urlMatchesListedResource(url, listedUrl)
-  );
-  if (matchedUrl) return { status: "starred", matchedUrl };
-
-  matchedUrl = base64DecodedLinks.find((listedUrl) =>
-    urlMatchesListedResource(url, listedUrl)
-  );
-  return matchedUrl ? { status: "safe", matchedUrl } : null;
-}
-
 function isSharedResourceHost(hostname) {
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   for (const host of sharedResourceHosts) {
@@ -1160,7 +1123,6 @@ async function notifySettingsPage() {
 
 // Site Status Checking
 async function checkSiteAndUpdatePageAction(tabId, url) {
-  if (initializationPromise) await initializationPromise;
   console.log(
     `checkSiteAndUpdatePageAction: Checking status for ${url} on tab ${tabId}`
   );
@@ -1230,16 +1192,6 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
   if (status === "no_data" && await getReasonForUrl(url)) {
     status = "unsafe";
     matchedUrl = normalizedUrl;
-  }
-
-  if (status === "no_data") {
-    const redirectOrigin = getRedirectOrigin(tabId, url);
-    if (redirectOrigin) {
-      status = getStatusFromLists(normalizeResourceUrl(redirectOrigin));
-      if (status === "no_data" && await getReasonForUrl(redirectOrigin)) {
-        status = "unsafe";
-      }
-    }
   }
 
   // Apply the correct icon status to the tab
@@ -1341,7 +1293,6 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getSiteStatus") {
     (async () => {
       try {
-        if (initializationPromise) await initializationPromise;
         // Get the URL from the message
         const url = message.url;
         if (!url) {
@@ -1414,35 +1365,16 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
-        let reasonDomain = domain;
-        let pathSpecificReason = await getReasonForUrl(url);
+        const pathSpecificReason = await getReasonForUrl(url);
         if (status === "no_data" && pathSpecificReason) {
           status = "unsafe";
           matchedUrl = normalizedUrl;
         }
 
-        if (status === "no_data") {
-          const redirectOrigin = getRedirectOrigin(message.tabId, url);
-          const redirectResourceUrl = normalizeResourceUrl(redirectOrigin);
-          if (redirectResourceUrl) {
-            status = getStatusFromLists(redirectResourceUrl);
-            const listedMatch = getListedResourceStatus(redirectResourceUrl);
-            matchedUrl = listedMatch?.matchedUrl || null;
-            reasonDomain = new URL(redirectResourceUrl).hostname;
-            pathSpecificReason = await getReasonForUrl(redirectOrigin);
-            if (status === "no_data" && pathSpecificReason) {
-              status = "unsafe";
-              matchedUrl = normalizeUrl(redirectOrigin);
-            } else if (status !== "no_data" && !matchedUrl) {
-              matchedUrl = normalizeUrl(redirectOrigin);
-            }
-          }
-        }
-
         // Get reason if unsafe
         let reason = null;
         if (status === "unsafe" || status === "potentially_unsafe") {
-          reason = pathSpecificReason || await getReasonForDomain(reasonDomain);
+          reason = pathSpecificReason || await getReasonForDomain(domain);
         }
 
         // Get password if available
@@ -1613,61 +1545,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Don't return anything for messages we don't handle - let other listeners process them
 });
 
-// Track server redirects. Firefox lacks webNavigation.onBeforeRedirect, so use
-// its redirect-qualified navigation commit as a fallback.
-if (browserAPI.webNavigation?.onBeforeRedirect?.addListener) {
-  browserAPI.webNavigation.onBeforeRedirect.addListener((details) => {
-    if (details.frameId !== 0 || details.tabId < 0) return;
-    const previous = redirectOrigins.get(details.tabId);
-    const continuesChain =
-      previous &&
-      normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
-    redirectOrigins.set(details.tabId, {
-      originUrl: continuesChain ? previous.originUrl : details.url,
-      targetUrl: details.redirectUrl,
-      createdAt: Date.now(),
-    });
-  });
-} else if (browserAPI.webRequest?.onBeforeRedirect?.addListener) {
-  browserAPI.webRequest.onBeforeRedirect.addListener(
-    (details) => {
-      if (details.tabId < 0) return;
-      const previous = redirectOrigins.get(details.tabId);
-      const continuesChain =
-        previous &&
-        normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
-      redirectOrigins.set(details.tabId, {
-        originUrl: continuesChain ? previous.originUrl : details.url,
-        targetUrl: details.redirectUrl,
-        createdAt: Date.now(),
-      });
-    },
-    { urls: ["<all_urls>"], types: ["main_frame"] }
-  );
-} else {
-  browserAPI.webNavigation?.onBeforeNavigate?.addListener((details) => {
-    if (details.frameId === 0 && details.tabId >= 0) {
-      pendingNavigationOrigins.set(details.tabId, details.url);
-    }
-  });
-  browserAPI.webNavigation?.onCommitted?.addListener((details) => {
-    if (details.frameId !== 0 || details.tabId < 0) return;
-    const originUrl = pendingNavigationOrigins.get(details.tabId);
-    pendingNavigationOrigins.delete(details.tabId);
-    if (
-      originUrl &&
-      details.transitionQualifiers?.includes("server_redirect") &&
-      normalizeResourceUrl(originUrl) !== normalizeResourceUrl(details.url)
-    ) {
-      redirectOrigins.set(details.tabId, {
-        originUrl,
-        targetUrl: details.url,
-        createdAt: Date.now(),
-      });
-    }
-  });
-}
-
+// Listen for tab updates
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
     // Always check the site status
@@ -1693,8 +1571,6 @@ browserAPI.alarms.onAlarm.addListener(async (alarm) => {
 
 browserAPI.tabs.onRemoved.addListener((tabId) => {
   approvedUrls.delete(tabId);
-  redirectOrigins.delete(tabId);
-  pendingNavigationOrigins.delete(tabId);
   browserAPI.storage.local.remove(`proceedTab_${tabId}`);
 });
 
@@ -1947,4 +1823,4 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-initializationPromise = initializeExtension();
+initializeExtension();
