@@ -387,7 +387,10 @@ test("shared hosts require the same path-bound resource", () => {
 test("cross-domain redirects retain the listed origin status per tab", () => {
   assert.match(chromiumManifest, /"webNavigation"/);
   assert.match(firefoxManifest, /"webNavigation"/);
-  assert.match(backgroundScript, /webNavigation\.onBeforeRedirect\.addListener/);
+  assert.match(backgroundScript, /webNavigation\?\.onBeforeRedirect\?\.addListener/);
+  assert.match(backgroundScript, /webNavigation\?\.onBeforeNavigate\?\.addListener/);
+  assert.match(backgroundScript, /webNavigation\?\.onCommitted\?\.addListener/);
+  assert.match(backgroundScript, /transitionQualifiers\?\.includes\("server_redirect"\)/);
   assert.match(backgroundScript, /redirectOrigins\.set\(details\.tabId/);
   assert.match(backgroundScript, /getRedirectOrigin\(message\.tabId, url\)/);
   assert.match(popupScript, /tabId: activeTab\.id/);

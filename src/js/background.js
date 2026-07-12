@@ -131,6 +131,7 @@ let fmhyResourceMap = {};
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
 const redirectOrigins = new Map(); // Navigation-scoped redirect origins per tab
+const pendingNavigationOrigins = new Map(); // Firefox redirect fallback origins
 const notesCache = new Map(); // Cache for fetched notes
 let userTrustedDomains = new Set(); // User-defined trusted domains
 let userUntrustedDomains = new Set(); // User-defined untrusted domains
@@ -1612,19 +1613,44 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Don't return anything for messages we don't handle - let other listeners process them
 });
 
-// Listen for tab updates
-browserAPI.webNavigation.onBeforeRedirect.addListener((details) => {
-  if (details.frameId !== 0 || details.tabId < 0) return;
-  const previous = redirectOrigins.get(details.tabId);
-  const continuesChain =
-    previous &&
-    normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
-  redirectOrigins.set(details.tabId, {
-    originUrl: continuesChain ? previous.originUrl : details.url,
-    targetUrl: details.redirectUrl,
-    createdAt: Date.now(),
+// Track server redirects. Firefox lacks webNavigation.onBeforeRedirect, so use
+// its redirect-qualified navigation commit as a fallback.
+if (browserAPI.webNavigation?.onBeforeRedirect?.addListener) {
+  browserAPI.webNavigation.onBeforeRedirect.addListener((details) => {
+    if (details.frameId !== 0 || details.tabId < 0) return;
+    const previous = redirectOrigins.get(details.tabId);
+    const continuesChain =
+      previous &&
+      normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
+    redirectOrigins.set(details.tabId, {
+      originUrl: continuesChain ? previous.originUrl : details.url,
+      targetUrl: details.redirectUrl,
+      createdAt: Date.now(),
+    });
   });
-});
+} else {
+  browserAPI.webNavigation?.onBeforeNavigate?.addListener((details) => {
+    if (details.frameId === 0 && details.tabId >= 0) {
+      pendingNavigationOrigins.set(details.tabId, details.url);
+    }
+  });
+  browserAPI.webNavigation?.onCommitted?.addListener((details) => {
+    if (details.frameId !== 0 || details.tabId < 0) return;
+    const originUrl = pendingNavigationOrigins.get(details.tabId);
+    pendingNavigationOrigins.delete(details.tabId);
+    if (
+      originUrl &&
+      details.transitionQualifiers?.includes("server_redirect") &&
+      normalizeResourceUrl(originUrl) !== normalizeResourceUrl(details.url)
+    ) {
+      redirectOrigins.set(details.tabId, {
+        originUrl,
+        targetUrl: details.url,
+        createdAt: Date.now(),
+      });
+    }
+  });
+}
 
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
@@ -1652,6 +1678,7 @@ browserAPI.alarms.onAlarm.addListener(async (alarm) => {
 browserAPI.tabs.onRemoved.addListener((tabId) => {
   approvedUrls.delete(tabId);
   redirectOrigins.delete(tabId);
+  pendingNavigationOrigins.delete(tabId);
   browserAPI.storage.local.remove(`proceedTab_${tabId}`);
 });
 
