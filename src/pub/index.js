@@ -317,8 +317,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else if (isSharedResourceHost) {
             displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
           } else {
-            // For regular sites, show the hostname currently being visited
-            displayUrl = currentUrlObj.hostname;
+            // For regular sites, just show the hostname from the matched URL
+            displayUrl = matchedUrlObj.hostname;
           }
         } catch (e) {
           console.error("Error formatting matched URL:", e);
