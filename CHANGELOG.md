@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.3.8 (07/12/2026)
 
 #### **🔧 Enhancements**
 - Checked every changed tab URL immediately so status and toolbar icons update before page completion, with earlier warning redirects for unsafe sites.

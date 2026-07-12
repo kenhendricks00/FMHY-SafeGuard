@@ -1,6 +1,6 @@
-[Commits to master since this release](https://github.com/kenhendricks00/FMHY-SafeGuard/compare/v1.3.7...master)
+[Commits to main since this release](https://github.com/fmhy/FMHY-SafeGuard/compare/v1.3.8...main)
 
 To install the developer build:
 
-- **Firefox**: Click [FMHY-SafeGuard_v1.3.7.firefox.signed.xpi](https://github.com/kenhendricks00/FMHY-SafeGuard/releases/download/v1.3.7/FMHY-SafeGuard_v1.3.7.firefox.signed.xpi).
-- **Chromium**: Click [FMHY-SafeGuard_v1.3.7.chromium.zip](https://github.com/kenhendricks00/FMHY-SafeGuard/releases/download/v1.3.7/FMHY-SafeGuard_v1.3.7.chromium.zip).
+- **Firefox**: Click [FMHY-SafeGuard_v1.3.8.firefox.signed.xpi](https://github.com/fmhy/FMHY-SafeGuard/releases/download/v1.3.8/FMHY-SafeGuard_v1.3.8.firefox.signed.xpi).
+- **Chromium**: Click [FMHY-SafeGuard_v1.3.8.chromium.zip](https://github.com/fmhy/FMHY-SafeGuard/releases/download/v1.3.8/FMHY-SafeGuard_v1.3.8.chromium.zip).
