@@ -19,6 +19,10 @@ const popupScript = fs.readFileSync(
   path.join(__dirname, "..", "src", "pub", "index.js"),
   "utf8",
 );
+const warningPageScript = fs.readFileSync(
+  path.join(__dirname, "..", "src", "pub", "warning-page.js"),
+  "utf8",
+);
 const fmhyHighlightScriptPath = path.join(
   __dirname,
   "..",
@@ -160,6 +164,39 @@ test("Markdown autolinks are extracted without angle brackets", () => {
     extractUrlsFromMarkdown("* <https://rentry.co/m2hkqhwb> - Mirror details"),
     ["https://rentry.co/m2hkqhwb"],
   );
+});
+
+test("filter-list regexes require URL and hostname boundaries", () => {
+  const generateRegexFromList = loadFunction(
+    backgroundScript,
+    "generateRegexFromList",
+  );
+  const urlRegex = generateRegexFromList([
+    "https://github.com/fvision8/fvreleases",
+  ]);
+  const hostnameRegex = generateRegexFromList(["unsafe.example"]);
+  const emptyRegex = generateRegexFromList([]);
+
+  assert.equal(urlRegex.test("https://github.com/fvision8/fvreleases"), true);
+  assert.equal(urlRegex.test("https://github.com/fvision8/fvreleases/app"), true);
+  assert.equal(urlRegex.test("https://github.com/fvision8/fvreleases-copy"), false);
+  assert.equal(urlRegex.test("https://github.com.evil/fvision8/fvreleases"), false);
+  assert.equal(hostnameRegex.test("unsafe.example"), true);
+  assert.equal(hostnameRegex.test("sub.unsafe.example"), true);
+  assert.equal(hostnameRegex.test("notunsafe.example"), false);
+  assert.equal(emptyRegex.test("https://anything.example"), false);
+});
+
+test("unsafe reasons are rendered without interpolating remote text as HTML", () => {
+  assert.match(popupScript, /function renderTextWithLinks\(/);
+  assert.match(warningPageScript, /function renderTextWithLinks\(/);
+  assert.match(contentScript, /function setUnsafeBadgeContent\(/);
+  assert.doesNotMatch(popupScript, /reasonContent\.innerHTML/);
+  assert.doesNotMatch(warningPageScript, /reasonText.*\.innerHTML|\.innerHTML.*reasonText/);
+  assert.doesNotMatch(contentScript, /badge\.innerHTML/);
+  assert.match(popupScript, /link\.textContent = url/);
+  assert.match(warningPageScript, /link\.textContent = url/);
+  assert.match(contentScript, /document\.createTextNode/);
 });
 
 test("root-only popup labels omit their trailing slash", () => {

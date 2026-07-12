@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Require real URL and hostname boundaries when matching filter-list entries.
+- Render unsafe reasons as text and safe links instead of injecting remote HTML.
 - Parse Markdown autolinks such as `<https://rentry.co/...>` as FMHY resources and map them to their guide sections.
 
 - Preserved resource paths in popup status labels for Codeberg, Rentry, and other shared hosts.

@@ -855,10 +855,15 @@ function extractRootUrl(url) {
 }
 
 function generateRegexFromList(list) {
-  const escapedList = list.map((domain) =>
-    domain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  );
-  return new RegExp(`(${escapedList.join("|")})`, "i");
+  if (!list.length) return /(?!)/;
+
+  const boundedPatterns = list.map((entry) => {
+    const escaped = entry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return entry.includes("://")
+      ? `^${escaped}(?=$|[/?#])`
+      : `(?:^|\\.)${escaped}$`;
+  });
+  return new RegExp(`(?:${boundedPatterns.join("|")})`, "i");
 }
 
 function extractUrlsFromFilterList(text) {

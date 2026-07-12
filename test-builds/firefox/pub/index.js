@@ -7,6 +7,26 @@ function formatHostAndPath(urlObj) {
   );
 }
 
+function renderTextWithLinks(container, text) {
+  container.replaceChildren();
+  const urlRegex = /https?:\/\/[^\s]+/g;
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(urlRegex)) {
+    container.append(document.createTextNode(text.slice(lastIndex, match.index)));
+    const url = match[0];
+    const link = document.createElement("a");
+    link.href = url;
+    link.textContent = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    container.append(link);
+    lastIndex = match.index + url.length;
+  }
+
+  container.append(document.createTextNode(text.slice(lastIndex)));
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Popup loaded, preparing to check site status...");
 
@@ -401,10 +421,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Handle reason display in dedicated container
     if (reason && (status === "unsafe" || status === "potentially_unsafe")) {
-      // Convert URLs to clickable links
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const formattedReason = reason.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
-      reasonContent.innerHTML = formattedReason;
+      renderTextWithLinks(reasonContent, reason);
       reasonContainer.classList.add("visible");
     } else {
       reasonContainer.classList.remove("visible");
