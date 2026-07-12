@@ -359,3 +359,18 @@ test("status matching isolates shared resources and recognizes matching subdomai
   assert.equal(getStatusFromLists("https://auth.ente.com/photos"), "no_data");
   assert.equal(getStatusFromLists("https://mullvad.net/en"), "starred");
 });
+
+test("the popup preserves Codeberg owner and repository names", () => {
+  assert.match(
+    popupScript,
+    /const repositoryHosts = new Set\(\[[\s\S]*"codeberg\.org"[\s\S]*\]\)/,
+  );
+  assert.match(
+    popupScript,
+    /repositoryHosts\.has\(matchedUrlObj\.hostname\)/,
+  );
+  assert.match(
+    popupScript,
+    /displayUrl = `\$\{matchedUrlObj\.hostname\}\/\$\{pathParts\[0\]\}\/\$\{pathParts\[1\]\}`/,
+  );
+});

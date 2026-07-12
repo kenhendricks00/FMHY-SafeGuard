@@ -15,6 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const warningPageUrl = browserAPI.runtime.getURL("pub/warning-page.html");
   const settingsPageUrl = browserAPI.runtime.getURL("pub/settings-page.html");
   const welcomePageUrl = browserAPI.runtime.getURL("pub/welcome-page.html");
+  const repositoryHosts = new Set([
+    "github.com",
+    "gitlab.com",
+    "codeberg.org",
+    "sourceforge.net",
+  ]);
   let fmhyLinkContext = null;
 
   fmhyResourceLink.addEventListener("click", async (event) => {
@@ -261,15 +267,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           const matchedUrlObj = new URL(response.matchedUrl);
           const currentUrlObj = new URL(currentUrl);
-          const isRepoSite = [
-            "github.com",
-            "gitlab.com",
-            "sourceforge.net",
-          ].some(
-            (domain) =>
-              matchedUrlObj.hostname === domain ||
-              matchedUrlObj.hostname.endsWith("." + domain)
-          );
+          const isRepoSite = repositoryHosts.has(matchedUrlObj.hostname);
 
           if (isRepoSite) {
             // For repo sites, extract the domain and path parts that were matched
@@ -305,10 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         // Fallback to current URL if no match
         const urlObj = new URL(currentUrl);
-        const isRepoSite = ["github.com", "gitlab.com", "sourceforge.net"].some(
-          (domain) =>
-            urlObj.hostname === domain || urlObj.hostname.endsWith("." + domain)
-        );
+        const isRepoSite = repositoryHosts.has(urlObj.hostname);
 
         if (isRepoSite) {
           // For repo sites, extract the domain and first two path segments (user/repo)
