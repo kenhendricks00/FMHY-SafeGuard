@@ -21,6 +21,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     "codeberg.org",
     "sourceforge.net",
   ]);
+  const sharedResourceHosts = new Set([
+    "github.com",
+    "raw.githubusercontent.com",
+    "gitlab.com",
+    "codeberg.org",
+    "sourceforge.net",
+    "rentry.co",
+    "rentry.org",
+    "pastebin.com",
+    "archive.org",
+    "drive.google.com",
+    "docs.google.com",
+    "discord.com",
+    "discord.gg",
+    "t.me",
+    "mega.nz",
+    "mediafire.com",
+    "gofile.io",
+    "pixeldrain.com",
+    "huggingface.co",
+  ]);
   let fmhyLinkContext = null;
 
   fmhyResourceLink.addEventListener("click", async (event) => {
@@ -268,6 +289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const matchedUrlObj = new URL(response.matchedUrl);
           const currentUrlObj = new URL(currentUrl);
           const isRepoSite = repositoryHosts.has(matchedUrlObj.hostname);
+          const isSharedResourceHost = sharedResourceHosts.has(matchedUrlObj.hostname);
 
           if (isRepoSite) {
             // For repo sites, extract the domain and path parts that were matched
@@ -292,6 +314,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
               }
             }
+          } else if (isSharedResourceHost) {
+            displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
           } else {
             // For regular sites, just show the hostname from the matched URL
             displayUrl = matchedUrlObj.hostname;
@@ -304,6 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Fallback to current URL if no match
         const urlObj = new URL(currentUrl);
         const isRepoSite = repositoryHosts.has(urlObj.hostname);
+        const isSharedResourceHost = sharedResourceHosts.has(urlObj.hostname);
 
         if (isRepoSite) {
           // For repo sites, extract the domain and first two path segments (user/repo)
@@ -313,6 +338,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else {
             displayUrl = urlObj.hostname + urlObj.pathname;
           }
+        } else if (isSharedResourceHost) {
+          displayUrl = urlObj.hostname + urlObj.pathname;
         } else {
           // For regular sites, just show the hostname
           displayUrl = urlObj.hostname;

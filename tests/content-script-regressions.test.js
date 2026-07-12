@@ -374,3 +374,22 @@ test("the popup preserves Codeberg owner and repository names", () => {
     /displayUrl = `\$\{matchedUrlObj\.hostname\}\/\$\{pathParts\[0\]\}\/\$\{pathParts\[1\]\}`/,
   );
 });
+
+test("the popup preserves paths for every shared resource host", () => {
+  const backgroundHosts = backgroundScript.match(
+    /const sharedResourceHosts = new Set\(\[([\s\S]*?)\]\);/,
+  )[1].match(/"([^"]+)"/g);
+  const popupHosts = popupScript.match(
+    /const sharedResourceHosts = new Set\(\[([\s\S]*?)\]\);/,
+  )[1].match(/"([^"]+)"/g);
+
+  assert.deepEqual(popupHosts, backgroundHosts);
+  assert.match(
+    popupScript,
+    /sharedResourceHosts\.has\(matchedUrlObj\.hostname\)/,
+  );
+  assert.match(
+    popupScript,
+    /displayUrl = matchedUrlObj\.hostname \+ matchedUrlObj\.pathname/,
+  );
+});
