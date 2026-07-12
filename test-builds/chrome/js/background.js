@@ -539,6 +539,31 @@ async function getReasonForDomain(hostname) {
   return null;
 }
 
+function getReasonKeyForUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace(/^www\./, "").toLowerCase();
+    const pathname = urlObj.pathname.replace(/\/+$/, "").toLowerCase();
+    return pathname ? `${domain}${pathname}` : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function getReasonForUrl(url) {
+  const reasonKey = getReasonKeyForUrl(url);
+  if (!reasonKey) return null;
+
+  const hostname = new URL(url).hostname;
+  await getReasonForDomain(hostname);
+
+  const matchedKey = Object.keys(unsafeReasons)
+    .filter((key) => key.includes("/") && (reasonKey === key || reasonKey.startsWith(`${key}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+
+  return matchedKey ? unsafeReasons[matchedKey] : null;
+}
+
 // Fetch note content from GitHub
 async function fetchNoteContent(noteSlug) {
   // Check cache first
@@ -1263,10 +1288,16 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
+        const pathSpecificReason = await getReasonForUrl(url);
+        if (status === "no_data" && pathSpecificReason) {
+          status = "unsafe";
+          matchedUrl = normalizedUrl;
+        }
+
         // Get reason if unsafe
         let reason = null;
         if (status === "unsafe" || status === "potentially_unsafe") {
-          reason = await getReasonForDomain(domain);
+          reason = pathSpecificReason || await getReasonForDomain(domain);
         }
 
         // Get password if available
@@ -1469,7 +1500,7 @@ async function openWarningPage(tabId, unsafeUrl) {
   } catch (e) {
     hostname = unsafeUrl.replace(/^https?:\/\//, "").split("/")[0];
   }
-  const reason = await getReasonForDomain(hostname);
+  const reason = await getReasonForUrl(unsafeUrl) || await getReasonForDomain(hostname);
   console.log(`openWarningPage: hostname=${hostname}, reason=${reason ? "found" : "not found"}`);
 
   // Redirect to the warning page if it is enabled in settings

@@ -150,3 +150,27 @@ test("shared-host passwords require an exact resource URL", () => {
     /getPasswordForDomain\(domain, url\)/,
   );
 });
+
+test("path-specific unsafe reasons preserve the repository path", () => {
+  const getReasonKeyForUrl = loadFunction(
+    backgroundScript,
+    "getReasonKeyForUrl",
+  );
+
+  assert.equal(
+    getReasonKeyForUrl(
+      "https://github.com/FVision8/FVReleases/releases?tab=readme#downloads",
+    ),
+    "github.com/fvision8/fvreleases/releases",
+  );
+  assert.equal(getReasonKeyForUrl("https://linktr.ee/flixvision/"), "linktr.ee/flixvision");
+  assert.equal(getReasonKeyForUrl("https://github.com/"), null);
+});
+
+test("path-specific reasons can classify otherwise unmatched URLs", () => {
+  assert.match(backgroundScript, /const pathSpecificReason = await getReasonForUrl\(url\)/);
+  assert.match(
+    backgroundScript,
+    /if \(status === "no_data" && pathSpecificReason\)/,
+  );
+});
