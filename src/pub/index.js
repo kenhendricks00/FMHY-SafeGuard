@@ -317,8 +317,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else if (isSharedResourceHost) {
             displayUrl = matchedUrlObj.hostname + matchedUrlObj.pathname;
           } else {
-            // For regular sites, just show the hostname from the matched URL
-            displayUrl = matchedUrlObj.hostname;
+            // Preserve a canonical FMHY resource path without a trailing slash.
+            const matchedPath = matchedUrlObj.pathname.replace(/\/+$/, "");
+            displayUrl = matchedUrlObj.hostname + matchedPath;
           }
         } catch (e) {
           console.error("Error formatting matched URL:", e);

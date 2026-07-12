@@ -292,6 +292,13 @@ test("normal subdomains only inherit the matching listed path", () => {
   );
   assert.equal(
     urlMatchesListedResource(
+      "https://auth.ente.com/login",
+      "https://ente.com/auth/",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
       "https://auth.ente.com/photos",
       "https://ente.com/auth/",
     ),
@@ -356,6 +363,7 @@ test("status matching isolates shared resources and recognizes matching subdomai
     "no_data",
   );
   assert.equal(getStatusFromLists("https://auth.ente.com/auth"), "starred");
+  assert.equal(getStatusFromLists("https://auth.ente.com/login"), "starred");
   assert.equal(getStatusFromLists("https://auth.ente.com/photos"), "no_data");
   assert.equal(getStatusFromLists("https://mullvad.net/en"), "starred");
 });
@@ -406,5 +414,17 @@ test("path-specific unsafe reasons also update the toolbar icon", () => {
   assert.match(
     backgroundScript,
     /updatePageAction\(status, tabId\);/,
+  );
+});
+
+test("the popup preserves canonical paths for ordinary FMHY resources", () => {
+  assert.ok(
+    popupScript.includes(
+      'const matchedPath = matchedUrlObj.pathname.replace(/\\/+$/, "");',
+    ),
+  );
+  assert.match(
+    popupScript,
+    /displayUrl = matchedUrlObj\.hostname \+ matchedPath;/,
   );
 });

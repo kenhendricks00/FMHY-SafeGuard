@@ -746,6 +746,12 @@ function urlMatchesListedResource(currentUrl, listedUrl) {
 
   const currentPath = current.pathname.replace(/\/+$/, "").toLowerCase();
   const listedPath = listed.pathname.replace(/\/+$/, "").toLowerCase();
+  const isEnteAuthRedirect =
+    currentHost === "auth.ente.com" &&
+    currentPath === "/login" &&
+    listedHost === "ente.com" &&
+    listedPath === "/auth";
+  if (isEnteAuthRedirect) return true;
   if (!listedPath) return !sharedHost || !currentPath;
   return currentPath === listedPath || currentPath.startsWith(`${listedPath}/`);
 }
