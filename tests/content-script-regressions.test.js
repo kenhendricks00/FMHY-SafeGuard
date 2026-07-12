@@ -52,6 +52,36 @@ function loadFunction(source, name) {
   throw new Error(`Could not read ${name}`);
 }
 
+function loadFunctionWithDependencies(source, name, dependencies) {
+  const fn = loadFunction(source, name);
+  return Function(
+    ...Object.keys(dependencies),
+    `return (${fn.toString()});`,
+  )(...Object.values(dependencies));
+}
+
+const sharedResourceHosts = new Set([
+  "github.com",
+  "raw.githubusercontent.com",
+  "gitlab.com",
+  "codeberg.org",
+  "sourceforge.net",
+  "rentry.co",
+  "rentry.org",
+  "pastebin.com",
+  "archive.org",
+  "drive.google.com",
+  "docs.google.com",
+  "discord.com",
+  "discord.gg",
+  "t.me",
+  "mega.nz",
+  "mediafire.com",
+  "gofile.io",
+  "pixeldrain.com",
+  "huggingface.co",
+]);
+
 test("processed link tracking can be reset after settings change", () => {
   assert.match(contentScript, /let processedLinks = new WeakSet\(\);/);
   assert.match(contentScript, /processedLinks = new WeakSet\(\);/);
@@ -188,4 +218,144 @@ test("the popup uses the neutral icon when a site is not in FMHY", () => {
     popupScript,
     /statusIcon\.alt = status === "no_data" \? "Not listed in FMHY" : "Site status"/,
   );
+});
+
+test("shared hosts require the same path-bound resource", () => {
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const isSharedResourceHost = loadFunctionWithDependencies(
+    backgroundScript,
+    "isSharedResourceHost",
+    { sharedResourceHosts },
+  );
+  const urlMatchesListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "urlMatchesListedResource",
+    { normalizeUrl, isSharedResourceHost },
+  );
+
+  assert.equal(
+    urlMatchesListedResource(
+      "https://github.com/fmhy/FMHY-SafeGuard/releases",
+      "https://github.com/fmhy/FMHY-SafeGuard",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://github.com/fmhy/FMHYFilterlist",
+      "https://github.com/fmhy/FMHY-SafeGuard",
+    ),
+    false,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://github.com/",
+      "https://github.com/fmhy/FMHY-SafeGuard",
+    ),
+    false,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://codeberg.org/example/tool/releases",
+      "https://codeberg.org/example/tool",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://rentry.co/another-page",
+      "https://rentry.co/fmhy",
+    ),
+    false,
+  );
+});
+
+test("normal subdomains only inherit the matching listed path", () => {
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const isSharedResourceHost = loadFunctionWithDependencies(
+    backgroundScript,
+    "isSharedResourceHost",
+    { sharedResourceHosts },
+  );
+  const urlMatchesListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "urlMatchesListedResource",
+    { normalizeUrl, isSharedResourceHost },
+  );
+
+  assert.equal(
+    urlMatchesListedResource(
+      "https://auth.ente.com/auth",
+      "https://ente.com/auth/",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://auth.ente.com/photos",
+      "https://ente.com/auth/",
+    ),
+    false,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://rentry.co/",
+      "https://rentry.co/fmhy",
+    ),
+    false,
+  );
+});
+
+test("status matching isolates shared resources and recognizes matching subdomains", () => {
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const isSharedResourceHost = loadFunctionWithDependencies(
+    backgroundScript,
+    "isSharedResourceHost",
+    { sharedResourceHosts },
+  );
+  const urlMatchesListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "urlMatchesListedResource",
+    { normalizeUrl, isSharedResourceHost },
+  );
+  const getStatusFromLists = loadFunctionWithDependencies(
+    backgroundScript,
+    "getStatusFromLists",
+    {
+      userTrustedDomains: new Set(),
+      userUntrustedDomains: new Set(),
+      isSharedResourceHost,
+      urlMatchesListedResource,
+      unsafeSitesRegex: null,
+      potentiallyUnsafeSitesRegex: null,
+      fmhySitesRegex: null,
+      starredSites: [
+        "https://github.com/fmhy/FMHY-SafeGuard",
+        "https://ente.com/auth",
+        "https://mullvad.net",
+      ],
+      safeSites: ["https://github.com/fmhy/FMHYFilterlist"],
+      base64StarredLinks: [],
+      base64DecodedLinks: [],
+      unsafeHostnamesRegex: null,
+      potentiallyUnsafeHostnamesRegex: null,
+    },
+  );
+
+  assert.equal(getStatusFromLists("https://github.com/"), "no_data");
+  assert.equal(
+    getStatusFromLists("https://github.com/fmhy/FMHY-SafeGuard/releases"),
+    "starred",
+  );
+  assert.equal(
+    getStatusFromLists("https://github.com/fmhy/FMHYFilterlist/issues"),
+    "safe",
+  );
+  assert.equal(
+    getStatusFromLists("https://github.com/fmhy/unlisted-repository"),
+    "no_data",
+  );
+  assert.equal(getStatusFromLists("https://auth.ente.com/auth"), "starred");
+  assert.equal(getStatusFromLists("https://auth.ente.com/photos"), "no_data");
+  assert.equal(getStatusFromLists("https://mullvad.net/en"), "starred");
 });
