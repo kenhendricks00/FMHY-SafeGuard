@@ -18,8 +18,12 @@
         "storage",
         "tabs",
         "webNavigation",
+        "webRequest",
         "alarms",
         "contextMenus"
+    ],
+    "host_permissions": [
+        "<all_urls>"
     ],
     "content_scripts": [
         {

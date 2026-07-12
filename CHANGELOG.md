@@ -12,6 +12,7 @@
 - Preserved FMHY status across canonical same-resource and navigation-scoped cross-domain redirects.
 - Prevented popup and toolbar checks from running before live list initialization completes.
 - Added a Firefox-compatible redirect tracker when `webNavigation.onBeforeRedirect` is unavailable.
+- Used Firefox `webRequest` main-frame redirect events when navigation commits omit the source URL.
 - Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
 - Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
 - Added path-aware unsafe reasons for repository and link-aggregator resources.

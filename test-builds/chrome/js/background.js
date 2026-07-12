@@ -1628,6 +1628,22 @@ if (browserAPI.webNavigation?.onBeforeRedirect?.addListener) {
       createdAt: Date.now(),
     });
   });
+} else if (browserAPI.webRequest?.onBeforeRedirect?.addListener) {
+  browserAPI.webRequest.onBeforeRedirect.addListener(
+    (details) => {
+      if (details.tabId < 0) return;
+      const previous = redirectOrigins.get(details.tabId);
+      const continuesChain =
+        previous &&
+        normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
+      redirectOrigins.set(details.tabId, {
+        originUrl: continuesChain ? previous.originUrl : details.url,
+        targetUrl: details.redirectUrl,
+        createdAt: Date.now(),
+      });
+    },
+    { urls: ["<all_urls>"], types: ["main_frame"] }
+  );
 } else {
   browserAPI.webNavigation?.onBeforeNavigate?.addListener((details) => {
     if (details.frameId === 0 && details.tabId >= 0) {
