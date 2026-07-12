@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Parse Markdown autolinks such as `<https://rentry.co/...>` as FMHY resources and map them to their guide sections.
+
 - Preserved resource paths in popup status labels for Codeberg, Rentry, and other shared hosts.
 - Kept toolbar icons aligned with path-specific unsafe classifications shown in the popup.
 - Distinguished starred Ente Auth redirects as canonical `ente.com/auth` resources instead of the safe Ente homepage.

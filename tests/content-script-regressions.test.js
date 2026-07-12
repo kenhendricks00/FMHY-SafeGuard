@@ -150,6 +150,18 @@ test("unbolded alternatives on a starred guide line are also starred", () => {
   ]);
 });
 
+test("Markdown autolinks are extracted without angle brackets", () => {
+  const extractUrlsFromMarkdown = loadFunction(
+    backgroundScript,
+    "extractUrlsFromMarkdown",
+  );
+
+  assert.deepEqual(
+    extractUrlsFromMarkdown("* <https://rentry.co/m2hkqhwb> - Mirror details"),
+    ["https://rentry.co/m2hkqhwb"],
+  );
+});
+
 test("root-only popup labels omit their trailing slash", () => {
   const formatHostAndPath = loadFunction(popupScript, "formatHostAndPath");
 
@@ -175,6 +187,26 @@ test("guide resources map to their FMHY page section", () => {
   assert.deepEqual(
     extractFmhyResourceMap(markdown, "https://fmhy.net/privacy"),
     { "https://vpn.example/download": "https://fmhy.net/privacy#vpn-services" },
+  );
+});
+
+test("Markdown autolinks map to their FMHY page section", () => {
+  const extractFmhyResourceMap = loadFunction(
+    backgroundScript,
+    "extractFmhyResourceMap",
+  );
+  const markdown = [
+    "## Reading",
+    "### LibGen Mirrors",
+    "* <https://rentry.co/m2hkqhwb> - Differences between the mirrors",
+  ].join("\n");
+
+  assert.deepEqual(
+    extractFmhyResourceMap(markdown, "https://fmhy.net/storage"),
+    {
+      "https://rentry.co/m2hkqhwb":
+        "https://fmhy.net/storage#libgen-mirrors",
+    },
   );
 });
 

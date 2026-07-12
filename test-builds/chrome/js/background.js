@@ -81,7 +81,7 @@ const unsafeReasonsURL =
   "https://raw.githubusercontent.com/fmhy/FMHYFilterlist/refs/heads/main/filterlists-reasons.json";
 const notesBaseURL =
   "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
-const resourceIdentityVersion = 1;
+const resourceIdentityVersion = 2;
 const sharedResourceHosts = new Set([
   "github.com",
   "gist.github.com",
@@ -622,7 +622,7 @@ async function fetchNoteContent(noteSlug) {
   }
 }
 function extractUrlsFromMarkdown(markdown) {
-  const urlRegex = /https?:\/\/[^\s)]+/g;
+  const urlRegex = /https?:\/\/[^\s)>]+/g;
   return markdown.match(urlRegex) || [];
 }
 
@@ -669,6 +669,9 @@ function extractFmhyResourceMap(markdown, guideUrl) {
     }
 
     for (const match of line.matchAll(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g)) {
+      resourceMap[match[1]] = sectionUrl;
+    }
+    for (const match of line.matchAll(/<(https?:\/\/[^>\s]+)>/g)) {
       resourceMap[match[1]] = sectionUrl;
     }
   }
