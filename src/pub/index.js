@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     "gitlab.com",
     "codeberg.org",
     "sourceforge.net",
+    "linktr.ee",
     "rentry.co",
     "rentry.org",
     "pastebin.com",

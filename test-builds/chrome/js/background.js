@@ -87,6 +87,7 @@ const sharedResourceHosts = new Set([
   "gitlab.com",
   "codeberg.org",
   "sourceforge.net",
+  "linktr.ee",
   "rentry.co",
   "rentry.org",
   "pastebin.com",

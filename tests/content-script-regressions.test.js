@@ -66,6 +66,7 @@ const sharedResourceHosts = new Set([
   "gitlab.com",
   "codeberg.org",
   "sourceforge.net",
+  "linktr.ee",
   "rentry.co",
   "rentry.org",
   "pastebin.com",
@@ -268,6 +269,13 @@ test("shared hosts require the same path-bound resource", () => {
     ),
     false,
   );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://linktr.ee/flixvision",
+      "https://linktr.ee/another-profile",
+    ),
+    false,
+  );
 });
 
 test("normal subdomains only inherit the matching listed path", () => {
@@ -392,6 +400,7 @@ test("the popup preserves paths for every shared resource host", () => {
   )[1].match(/"([^"]+)"/g);
 
   assert.deepEqual(popupHosts, backgroundHosts);
+  assert.ok(backgroundHosts.includes('"linktr.ee"'));
   assert.match(
     popupScript,
     /sharedResourceHosts\.has\(matchedUrlObj\.hostname\)/,
