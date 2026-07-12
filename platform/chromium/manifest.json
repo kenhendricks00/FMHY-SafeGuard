@@ -17,6 +17,7 @@
     "permissions": [
         "storage",
         "tabs",
+        "webNavigation",
         "alarms",
         "contextMenus"
     ],

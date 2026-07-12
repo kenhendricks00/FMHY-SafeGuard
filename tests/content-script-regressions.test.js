@@ -237,7 +237,7 @@ test("path-specific unsafe reasons preserve the repository path", () => {
 });
 
 test("path-specific reasons can classify otherwise unmatched URLs", () => {
-  assert.match(backgroundScript, /const pathSpecificReason = await getReasonForUrl\(url\)/);
+  assert.match(backgroundScript, /let pathSpecificReason = await getReasonForUrl\(url\)/);
   assert.match(
     backgroundScript,
     /if \(status === "no_data" && pathSpecificReason\)/,
@@ -368,6 +368,57 @@ test("shared hosts require the same path-bound resource", () => {
     ),
     true,
   );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://greasyfork.org/en/scripts/453320-simple-sponsor-skipper",
+      "https://greasyfork.org/en/scripts/453320",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://greasyfork.org/en/scripts/999999-unlisted-script",
+      "https://greasyfork.org/en/scripts/453320",
+    ),
+    false,
+  );
+});
+
+test("cross-domain redirects retain the listed origin status per tab", () => {
+  assert.match(chromiumManifest, /"webNavigation"/);
+  assert.match(firefoxManifest, /"webNavigation"/);
+  assert.match(backgroundScript, /webNavigation\.onBeforeRedirect\.addListener/);
+  assert.match(backgroundScript, /redirectOrigins\.set\(details\.tabId/);
+  assert.match(backgroundScript, /getRedirectOrigin\(message\.tabId, url\)/);
+  assert.match(popupScript, /tabId: activeTab\.id/);
+
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
+  const redirectOrigins = new Map([
+    [
+      7,
+      {
+        originUrl: "https://alienflix.net/",
+        targetUrl: "https://hdtodayz.net/",
+        createdAt: Date.now(),
+      },
+    ],
+  ]);
+  const getRedirectOrigin = loadFunctionWithDependencies(
+    backgroundScript,
+    "getRedirectOrigin",
+    { redirectOrigins, normalizeResourceUrl },
+  );
+
+  assert.equal(
+    getRedirectOrigin(7, "https://hdtodayz.net/"),
+    "https://alienflix.net/",
+  );
+  assert.equal(getRedirectOrigin(7, "https://unrelated.example/"), null);
 });
 
 test("normal subdomains only inherit the matching listed path", () => {

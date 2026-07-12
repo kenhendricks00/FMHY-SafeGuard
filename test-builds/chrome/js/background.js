@@ -130,6 +130,7 @@ let starredSites = [];
 let fmhyResourceMap = {};
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
+const redirectOrigins = new Map(); // Navigation-scoped redirect origins per tab
 const notesCache = new Map(); // Cache for fetched notes
 let userTrustedDomains = new Set(); // User-defined trusted domains
 let userUntrustedDomains = new Set(); // User-defined untrusted domains
@@ -758,6 +759,40 @@ function normalizeResourceUrl(url) {
   }
 }
 
+function getRedirectOrigin(tabId, currentUrl) {
+  if (!Number.isInteger(tabId)) return null;
+  const redirect = redirectOrigins.get(tabId);
+  if (!redirect || Date.now() - redirect.createdAt > 2 * 60 * 1000) {
+    redirectOrigins.delete(tabId);
+    return null;
+  }
+  return normalizeResourceUrl(redirect.targetUrl) === normalizeResourceUrl(currentUrl)
+    ? redirect.originUrl
+    : null;
+}
+
+function getListedResourceStatus(url) {
+  let matchedUrl = starredSites.find((listedUrl) =>
+    urlMatchesListedResource(url, listedUrl)
+  );
+  if (matchedUrl) return { status: "starred", matchedUrl };
+
+  matchedUrl = safeSites.find((listedUrl) =>
+    urlMatchesListedResource(url, listedUrl)
+  );
+  if (matchedUrl) return { status: "safe", matchedUrl };
+
+  matchedUrl = base64StarredLinks.find((listedUrl) =>
+    urlMatchesListedResource(url, listedUrl)
+  );
+  if (matchedUrl) return { status: "starred", matchedUrl };
+
+  matchedUrl = base64DecodedLinks.find((listedUrl) =>
+    urlMatchesListedResource(url, listedUrl)
+  );
+  return matchedUrl ? { status: "safe", matchedUrl } : null;
+}
+
 function isSharedResourceHost(hostname) {
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   for (const host of sharedResourceHosts) {
@@ -783,6 +818,19 @@ function urlMatchesListedResource(currentUrl, listedUrl) {
 
   const currentPath = current.pathname.replace(/\/+$/, "").toLowerCase();
   const listedPath = listed.pathname.replace(/\/+$/, "").toLowerCase();
+  const currentGreasyForkScript = currentPath.match(
+    /^\/(?:[^/]+\/)?scripts\/(\d+)/
+  );
+  const listedGreasyForkScript = listedPath.match(
+    /^\/(?:[^/]+\/)?scripts\/(\d+)/
+  );
+  if (
+    currentHost === "greasyfork.org" &&
+    listedHost === "greasyfork.org" &&
+    currentGreasyForkScript?.[1] === listedGreasyForkScript?.[1]
+  ) {
+    return true;
+  }
   const isGistPlatformPage =
     currentHost === "gist.github.com" &&
     ["/starred", "/discover"].includes(currentPath) &&
@@ -1181,6 +1229,16 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
     matchedUrl = normalizedUrl;
   }
 
+  if (status === "no_data") {
+    const redirectOrigin = getRedirectOrigin(tabId, url);
+    if (redirectOrigin) {
+      status = getStatusFromLists(normalizeResourceUrl(redirectOrigin));
+      if (status === "no_data" && await getReasonForUrl(redirectOrigin)) {
+        status = "unsafe";
+      }
+    }
+  }
+
   // Apply the correct icon status to the tab
   updatePageAction(status, tabId);
 
@@ -1352,16 +1410,35 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
-        const pathSpecificReason = await getReasonForUrl(url);
+        let reasonDomain = domain;
+        let pathSpecificReason = await getReasonForUrl(url);
         if (status === "no_data" && pathSpecificReason) {
           status = "unsafe";
           matchedUrl = normalizedUrl;
         }
 
+        if (status === "no_data") {
+          const redirectOrigin = getRedirectOrigin(message.tabId, url);
+          const redirectResourceUrl = normalizeResourceUrl(redirectOrigin);
+          if (redirectResourceUrl) {
+            status = getStatusFromLists(redirectResourceUrl);
+            const listedMatch = getListedResourceStatus(redirectResourceUrl);
+            matchedUrl = listedMatch?.matchedUrl || null;
+            reasonDomain = new URL(redirectResourceUrl).hostname;
+            pathSpecificReason = await getReasonForUrl(redirectOrigin);
+            if (status === "no_data" && pathSpecificReason) {
+              status = "unsafe";
+              matchedUrl = normalizeUrl(redirectOrigin);
+            } else if (status !== "no_data" && !matchedUrl) {
+              matchedUrl = normalizeUrl(redirectOrigin);
+            }
+          }
+        }
+
         // Get reason if unsafe
         let reason = null;
         if (status === "unsafe" || status === "potentially_unsafe") {
-          reason = pathSpecificReason || await getReasonForDomain(domain);
+          reason = pathSpecificReason || await getReasonForDomain(reasonDomain);
         }
 
         // Get password if available
@@ -1533,6 +1610,19 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Listen for tab updates
+browserAPI.webNavigation.onBeforeRedirect.addListener((details) => {
+  if (details.frameId !== 0 || details.tabId < 0) return;
+  const previous = redirectOrigins.get(details.tabId);
+  const continuesChain =
+    previous &&
+    normalizeResourceUrl(previous.targetUrl) === normalizeResourceUrl(details.url);
+  redirectOrigins.set(details.tabId, {
+    originUrl: continuesChain ? previous.originUrl : details.url,
+    targetUrl: details.redirectUrl,
+    createdAt: Date.now(),
+  });
+});
+
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
     // Always check the site status
@@ -1558,6 +1648,7 @@ browserAPI.alarms.onAlarm.addListener(async (alarm) => {
 
 browserAPI.tabs.onRemoved.addListener((tabId) => {
   approvedUrls.delete(tabId);
+  redirectOrigins.delete(tabId);
   browserAPI.storage.local.remove(`proceedTab_${tabId}`);
 });
 
