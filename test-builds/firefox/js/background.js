@@ -1051,6 +1051,9 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
 
   const normalizedUrl = normalizeUrl(url.trim());
   const rootUrl = extractRootUrl(normalizedUrl);
+  const requiresResourcePath = normalizedUrl
+    ? isSharedResourceHost(new URL(normalizedUrl).hostname)
+    : false;
 
   // Detect if the URL is an internal extension page (settings page or warning page)
   const extUrlBase = browserAPI.runtime.getURL("");
@@ -1081,7 +1084,7 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
   }
 
   // If still no match, check the root URL
-  if (status === "no_data") {
+  if (status === "no_data" && !requiresResourcePath) {
     status = getStatusFromLists(rootUrl);
     if (status !== "no_data") matchedUrl = rootUrl;
 

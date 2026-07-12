@@ -426,6 +426,17 @@ test("path-specific unsafe reasons also update the toolbar icon", () => {
   );
 });
 
+test("the toolbar does not inherit root status on shared hosts", () => {
+  assert.match(
+    backgroundScript,
+    /const requiresResourcePath = normalizedUrl\s*\? isSharedResourceHost\(new URL\(normalizedUrl\)\.hostname\)\s*: false;/,
+  );
+  assert.match(
+    backgroundScript,
+    /if \(status === "no_data" && !requiresResourcePath\) \{\s*status = getStatusFromLists\(rootUrl\);/,
+  );
+});
+
 test("the popup preserves canonical paths for ordinary FMHY resources", () => {
   assert.ok(
     popupScript.includes(
