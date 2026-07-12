@@ -459,22 +459,33 @@ const notesPatterns = [
 const sitePasswords = {
   "cs.rin.ru": "cs.rin.ru",
   "csrin.org": "csrin.org",
+  "steamrip.com": "steamrip.com",
   "online-fix.me": "online-fix.me",
   "ovagames.com": "www.ovagames.com",
   "g4u.to": "404",
   "elenemigos.com": "elenemigos.com",
   "triahgames.com": "www.triahgames.com",
   "soft98.ir": "soft98.ir",
+  "iptv.watchott.ru": "FREE-MEDIA",
+};
+
+// Passwords for resources that share a host and must be matched by URL.
+const siteUrlPasswords = {
+  "https://rentry.co/fmhyb64#gnarly": "gnarly",
+  "https://rentry.co/fmhyb64#alvro": "ByAlvRo",
 };
 
 // Hardcoded site invite codes - Maps domains to their invite codes
 const siteInviteCodes = {
   "ee3.me": "mpgh",
-  "rips.cc": "mpgh",
+  "rips.cc": "1hack",
 };
 
 // Get password for a domain
-function getPasswordForDomain(hostname) {
+function getPasswordForDomain(hostname, url = "") {
+  const urlPassword = siteUrlPasswords[url.toLowerCase().replace(/\/$/, "")];
+  if (urlPassword) return urlPassword;
+
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   return sitePasswords[domain] || null;
 }
@@ -1259,7 +1270,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         // Get password if available
-        const password = getPasswordForDomain(domain);
+        const password = getPasswordForDomain(domain, url);
 
         // Get invite code if available
         const inviteCode = getInviteCodeForDomain(domain);

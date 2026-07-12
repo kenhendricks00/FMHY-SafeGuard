@@ -127,3 +127,26 @@ test("opening an FMHY resource highlights its matching guide line", () => {
   assert.match(chromiumManifest, /js\/fmhy-highlight\.js/);
   assert.match(firefoxManifest, /js\/fmhy-highlight\.js/);
 });
+
+test("FMHY passwords and invite codes match the current guide", () => {
+  assert.match(backgroundScript, /"steamrip\.com": "steamrip\.com"/);
+  assert.match(backgroundScript, /"iptv\.watchott\.ru": "FREE-MEDIA"/);
+  assert.match(
+    backgroundScript,
+    /"https:\/\/rentry\.co\/fmhyb64#gnarly": "gnarly"/,
+  );
+  assert.match(
+    backgroundScript,
+    /"https:\/\/rentry\.co\/fmhyb64#alvro": "ByAlvRo"/,
+  );
+  assert.match(backgroundScript, /"ee3\.me": "mpgh"/);
+  assert.match(backgroundScript, /"rips\.cc": "1hack"/);
+});
+
+test("shared-host passwords require an exact resource URL", () => {
+  assert.doesNotMatch(backgroundScript, /"rentry\.co":/);
+  assert.match(
+    backgroundScript,
+    /getPasswordForDomain\(domain, url\)/,
+  );
+});

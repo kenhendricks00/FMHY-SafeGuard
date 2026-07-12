@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added missing FMHY passwords for SteamRIP, Watchott Live, Gnarly Repacks, and AlvRo.
+- Corrected the RIPS invite code to `1hack` while keeping EE3 on `mpgh`.
+
 ## v1.3.7 (07/10/2026)
 
 #### **🚀 New Features**
