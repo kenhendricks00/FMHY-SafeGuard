@@ -81,10 +81,23 @@ const unsafeReasonsURL =
   "https://raw.githubusercontent.com/fmhy/FMHYFilterlist/refs/heads/main/filterlists-reasons.json";
 const notesBaseURL =
   "https://raw.githubusercontent.com/fmhy/edit/main/docs/.vitepress/notes/";
+const resourceIdentityVersion = 1;
 const sharedResourceHosts = new Set([
   "github.com",
   "gist.github.com",
   "raw.githubusercontent.com",
+  "greasyfork.org",
+  "youtube.com",
+  "chromewebstore.google.com",
+  "colab.research.google.com",
+  "modrinth.com",
+  "f-droid.org",
+  "xdaforums.com",
+  "start.me",
+  "sites.google.com",
+  "matrix.to",
+  "codepen.io",
+  "vk.com",
   "gitlab.com",
   "codeberg.org",
   "sourceforge.net",
@@ -664,7 +677,7 @@ function extractFmhyResourceMap(markdown, guideUrl) {
 }
 
 function getFmhyUrlForMatch(matchedUrl) {
-  const normalizedUrl = normalizeUrl(matchedUrl);
+  const normalizedUrl = normalizeResourceUrl(matchedUrl);
   if (!normalizedUrl) return null;
   return fmhyResourceMap[normalizedUrl] || null;
 }
@@ -728,6 +741,23 @@ function normalizeUrl(url) {
   }
 }
 
+function normalizeResourceUrl(url) {
+  const normalized = normalizeUrl(url);
+  if (!normalized) return null;
+
+  try {
+    const source = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const sourceObj = new URL(source);
+    const normalizedObj = new URL(normalized);
+    normalizedObj.search = sourceObj.search;
+    normalizedObj.hash = sourceObj.hash;
+    return normalizedObj.href;
+  } catch (error) {
+    console.warn(`Invalid resource URL skipped: ${url} - ${error.message}`);
+    return null;
+  }
+}
+
 function isSharedResourceHost(hostname) {
   const domain = hostname.replace(/^www\./, "").toLowerCase();
   for (const host of sharedResourceHosts) {
@@ -737,8 +767,8 @@ function isSharedResourceHost(hostname) {
 }
 
 function urlMatchesListedResource(currentUrl, listedUrl) {
-  const normalizedCurrent = normalizeUrl(currentUrl);
-  const normalizedListed = normalizeUrl(listedUrl);
+  const normalizedCurrent = normalizeResourceUrl(currentUrl);
+  const normalizedListed = normalizeResourceUrl(listedUrl);
   if (!normalizedCurrent || !normalizedListed) return false;
 
   const current = new URL(normalizedCurrent);
@@ -765,8 +795,32 @@ function urlMatchesListedResource(currentUrl, listedUrl) {
     listedHost === "ente.com" &&
     listedPath === "/auth";
   if (isEnteAuthRedirect) return true;
-  if (!listedPath) return !sharedHost || !currentPath;
-  return currentPath === listedPath || currentPath.startsWith(`${listedPath}/`);
+  const pathMatches = !listedPath
+    ? !sharedHost || !currentPath
+    : currentPath === listedPath || currentPath.startsWith(`${listedPath}/`);
+  if (!pathMatches) return false;
+
+  const queryIdentifiesResource = ["youtube.com", "archive.org"].includes(
+    listedHost
+  );
+  if (queryIdentifiesResource) {
+    for (const [key, value] of listed.searchParams) {
+      if (current.searchParams.get(key) !== value) return false;
+    }
+  }
+  const fragmentIdentifiesResource = [
+    "rentry.co",
+    "rentry.org",
+    "matrix.to",
+  ].includes(listedHost);
+  if (
+    fragmentIdentifiesResource &&
+    listed.hash &&
+    current.hash.toLowerCase() !== listed.hash.toLowerCase()
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function extractRootUrl(url) {
@@ -935,7 +989,7 @@ async function fetchSafeSites() {
         const guideUrl = `https://fmhy.net/${guideName}`;
         const guideMap = extractFmhyResourceMap(markdown, guideUrl);
         for (const [resourceUrl, fmhyUrl] of Object.entries(guideMap)) {
-          const normalizedResourceUrl = normalizeUrl(resourceUrl);
+          const normalizedResourceUrl = normalizeResourceUrl(resourceUrl);
           if (normalizedResourceUrl) fmhyResourceMap[normalizedResourceUrl] = fmhyUrl;
         }
       } else {
@@ -944,13 +998,16 @@ async function fetchSafeSites() {
     }
 
     // Normalize URLs and remove duplicates
-    safeSites = [...new Set(allUrls.map((url) => normalizeUrl(url.trim())))];
+    safeSites = [
+      ...new Set(allUrls.map((url) => normalizeResourceUrl(url.trim()))),
+    ].filter((url) => url !== null);
 
     // Store safe sites for content script use
     await browserAPI.storage.local.set({
       safeSiteCount: safeSites.length,
       safeSiteList: safeSites,
       fmhyResourceMap,
+      resourceIdentityVersion,
     });
 
     console.log("Stored safe site count:", safeSites.length);
@@ -982,7 +1039,7 @@ async function fetchStarredSites() {
     starredSites = Array.from(
       new Set(
         starredUrls
-          .map((url) => normalizeUrl(url))
+          .map((url) => normalizeResourceUrl(url))
           .filter((url) => url !== null)
       )
     );
@@ -990,6 +1047,7 @@ async function fetchStarredSites() {
     await browserAPI.storage.local.set({
       starredSites,
       starredSiteCount: starredSites.length,
+      resourceIdentityVersion,
     });
 
     console.log(`Stored ${starredSites.length} starred sites`);
@@ -1062,6 +1120,7 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
   }
 
   const normalizedUrl = normalizeUrl(url.trim());
+  const resourceUrl = normalizeResourceUrl(url.trim());
   const rootUrl = extractRootUrl(normalizedUrl);
   const requiresResourcePath = normalizedUrl
     ? isSharedResourceHost(new URL(normalizedUrl).hostname)
@@ -1081,16 +1140,24 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
   let matchedUrl = normalizedUrl;
 
   // First check the full URL
-  status = getStatusFromLists(normalizedUrl);
+  status = getStatusFromLists(resourceUrl);
 
   // If not found, try with trailing slash
-  if (status === "no_data" && !normalizedUrl.endsWith("/")) {
+  if (
+    status === "no_data" &&
+    !requiresResourcePath &&
+    !normalizedUrl.endsWith("/")
+  ) {
     status = getStatusFromLists(normalizedUrl + "/");
     if (status !== "no_data") matchedUrl = normalizedUrl + "/";
   }
 
   // If not found, try without trailing slash
-  if (status === "no_data" && normalizedUrl.endsWith("/")) {
+  if (
+    status === "no_data" &&
+    !requiresResourcePath &&
+    normalizedUrl.endsWith("/")
+  ) {
     status = getStatusFromLists(normalizedUrl.slice(0, -1));
     if (status !== "no_data") matchedUrl = normalizedUrl.slice(0, -1);
   }
@@ -1224,7 +1291,8 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Normalize the URL
         const normalizedUrl = normalizeUrl(url);
-        if (!normalizedUrl) {
+        const resourceUrl = normalizeResourceUrl(url);
+        if (!normalizedUrl || !resourceUrl) {
           sendResponse({ status: "no_data", matchedUrl: null });
           return;
         }
@@ -1256,16 +1324,16 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
           status = "fmhy";
           matchedUrl = normalizedUrl;
         } else if ((matchedUrl = starredSites.find((listedUrl) =>
-          urlMatchesListedResource(normalizedUrl, listedUrl)))) {
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "starred";
         } else if ((matchedUrl = safeSites.find((listedUrl) =>
-          urlMatchesListedResource(normalizedUrl, listedUrl)))) {
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "safe";
         } else if ((matchedUrl = base64StarredLinks.find((listedUrl) =>
-          urlMatchesListedResource(normalizedUrl, listedUrl)))) {
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "starred";
         } else if ((matchedUrl = base64DecodedLinks.find((listedUrl) =>
-          urlMatchesListedResource(normalizedUrl, listedUrl)))) {
+          urlMatchesListedResource(resourceUrl, listedUrl)))) {
           status = "safe";
         }
 
@@ -1575,7 +1643,10 @@ async function initializeExtension() {
           "safeSiteList",
           "fmhyResourceMap",
           "unsafeReasons",
+          "resourceIdentityVersion",
         ]);
+        const hasCurrentResourceIdentity =
+          storedData.resourceIdentityVersion === resourceIdentityVersion;
 
         if (storedData.unsafeSites && storedData.unsafeSites.length > 0) {
           unsafeSitesRegex = generateRegexFromList(storedData.unsafeSites);
@@ -1622,7 +1693,11 @@ async function initializeExtension() {
         }
 
         // Load starred sites from storage
-        if (storedData.starredSites && storedData.starredSites.length > 0) {
+        if (
+          hasCurrentResourceIdentity &&
+          storedData.starredSites &&
+          storedData.starredSites.length > 0
+        ) {
           starredSites = storedData.starredSites;
           console.log(
             `Loaded ${starredSites.length} starred sites from storage`
@@ -1635,7 +1710,11 @@ async function initializeExtension() {
         fmhyResourceMap = storedData.fmhyResourceMap || {};
 
         // Load safe sites and their FMHY guide locations from storage
-        if (storedData.safeSiteList && storedData.safeSiteList.length > 0) {
+        if (
+          hasCurrentResourceIdentity &&
+          storedData.safeSiteList &&
+          storedData.safeSiteList.length > 0
+        ) {
           safeSites = storedData.safeSiteList;
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
           const hasLegacyAnchors = Object.values(fmhyResourceMap).some(

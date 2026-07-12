@@ -1,5 +1,10 @@
 function formatHostAndPath(urlObj) {
-  return urlObj.hostname + urlObj.pathname.replace(/\/+$/, "");
+  return (
+    urlObj.hostname +
+    urlObj.pathname.replace(/\/+$/, "") +
+    urlObj.search +
+    urlObj.hash
+  );
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,6 +34,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     "github.com",
     "gist.github.com",
     "raw.githubusercontent.com",
+    "greasyfork.org",
+    "youtube.com",
+    "chromewebstore.google.com",
+    "colab.research.google.com",
+    "modrinth.com",
+    "f-droid.org",
+    "xdaforums.com",
+    "start.me",
+    "sites.google.com",
+    "matrix.to",
+    "codepen.io",
+    "vk.com",
     "gitlab.com",
     "codeberg.org",
     "sourceforge.net",

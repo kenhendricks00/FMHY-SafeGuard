@@ -64,6 +64,18 @@ const sharedResourceHosts = new Set([
   "github.com",
   "gist.github.com",
   "raw.githubusercontent.com",
+  "greasyfork.org",
+  "youtube.com",
+  "chromewebstore.google.com",
+  "colab.research.google.com",
+  "modrinth.com",
+  "f-droid.org",
+  "xdaforums.com",
+  "start.me",
+  "sites.google.com",
+  "matrix.to",
+  "codepen.io",
+  "vk.com",
   "gitlab.com",
   "codeberg.org",
   "sourceforge.net",
@@ -249,6 +261,11 @@ test("the popup uses the neutral icon when a site is not in FMHY", () => {
 
 test("shared hosts require the same path-bound resource", () => {
   const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
   const isSharedResourceHost = loadFunctionWithDependencies(
     backgroundScript,
     "isSharedResourceHost",
@@ -257,7 +274,7 @@ test("shared hosts require the same path-bound resource", () => {
   const urlMatchesListedResource = loadFunctionWithDependencies(
     backgroundScript,
     "urlMatchesListedResource",
-    { normalizeUrl, isSharedResourceHost },
+    { normalizeResourceUrl, isSharedResourceHost },
   );
 
   assert.equal(
@@ -316,10 +333,50 @@ test("shared hosts require the same path-bound resource", () => {
     ),
     false,
   );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://www.youtube.com/watch?v=listed&t=30",
+      "https://www.youtube.com/watch?v=listed",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://www.youtube.com/watch?v=unlisted",
+      "https://www.youtube.com/watch?v=listed",
+    ),
+    false,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://matrix.to/#/#listed:matrix.org",
+      "https://matrix.to/#/#listed:matrix.org",
+    ),
+    true,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://matrix.to/#/#other:matrix.org",
+      "https://matrix.to/#/#listed:matrix.org",
+    ),
+    false,
+  );
+  assert.equal(
+    urlMatchesListedResource(
+      "https://github.com/fmhy/FMHY-SafeGuard",
+      "https://github.com/fmhy/FMHY-SafeGuard#readme",
+    ),
+    true,
+  );
 });
 
 test("normal subdomains only inherit the matching listed path", () => {
   const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
   const isSharedResourceHost = loadFunctionWithDependencies(
     backgroundScript,
     "isSharedResourceHost",
@@ -328,7 +385,7 @@ test("normal subdomains only inherit the matching listed path", () => {
   const urlMatchesListedResource = loadFunctionWithDependencies(
     backgroundScript,
     "urlMatchesListedResource",
-    { normalizeUrl, isSharedResourceHost },
+    { normalizeResourceUrl, isSharedResourceHost },
   );
 
   assert.equal(
@@ -363,6 +420,11 @@ test("normal subdomains only inherit the matching listed path", () => {
 
 test("status matching isolates shared resources and recognizes matching subdomains", () => {
   const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
   const isSharedResourceHost = loadFunctionWithDependencies(
     backgroundScript,
     "isSharedResourceHost",
@@ -371,7 +433,7 @@ test("status matching isolates shared resources and recognizes matching subdomai
   const urlMatchesListedResource = loadFunctionWithDependencies(
     backgroundScript,
     "urlMatchesListedResource",
-    { normalizeUrl, isSharedResourceHost },
+    { normalizeResourceUrl, isSharedResourceHost },
   );
   const getStatusFromLists = loadFunctionWithDependencies(
     backgroundScript,
@@ -452,6 +514,22 @@ test("the popup preserves paths for every shared resource host", () => {
 
   assert.deepEqual(popupHosts, backgroundHosts);
   assert.ok(backgroundHosts.includes('"linktr.ee"'));
+  for (const host of [
+    '"greasyfork.org"',
+    '"youtube.com"',
+    '"chromewebstore.google.com"',
+    '"colab.research.google.com"',
+    '"modrinth.com"',
+    '"f-droid.org"',
+    '"xdaforums.com"',
+    '"start.me"',
+    '"sites.google.com"',
+    '"matrix.to"',
+    '"codepen.io"',
+    '"vk.com"',
+  ]) {
+    assert.ok(backgroundHosts.includes(host));
+  }
   assert.match(
     popupScript,
     /sharedResourceHosts\.has\(matchedUrlObj\.hostname\)/,
@@ -474,6 +552,25 @@ test("path-specific unsafe reasons also update the toolbar icon", () => {
   assert.match(
     backgroundScript,
     /updatePageAction\(status, tabId\);/,
+  );
+});
+
+test("live resource data preserves query and fragment identities", () => {
+  assert.match(
+    backgroundScript,
+    /allUrls\.map\(\(url\) => normalizeResourceUrl\(url\.trim\(\)\)\)/,
+  );
+  assert.match(
+    backgroundScript,
+    /const resourceUrl = normalizeResourceUrl\(url\);/,
+  );
+  assert.match(
+    backgroundScript,
+    /urlMatchesListedResource\(resourceUrl, listedUrl\)/,
+  );
+  assert.match(
+    backgroundScript,
+    /storedData\.resourceIdentityVersion === resourceIdentityVersion/,
   );
 });
 
