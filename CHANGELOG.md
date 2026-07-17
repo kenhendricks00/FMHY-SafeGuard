@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.3.9 (07/17/2026)
 
 #### **🐞 Bug Fixes**
 - Prevented page loads from repeatedly scanning the full FMHY resource list, eliminating the v1.3.8 CPU spike.
