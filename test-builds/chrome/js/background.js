@@ -1083,14 +1083,15 @@ async function fetchFilterLists() {
   }
 }
 
-async function fetchSafeSites() {
-  console.log("Fetching safe sites from multiple URLs...");
+async function fetchResourceLists() {
+  console.log("Fetching FMHY resource guides...");
   try {
     const fetchPromises = safeListURLs.map((url) => fetch(url));
     const responses = await Promise.all(fetchPromises);
 
     // Extract URLs from each markdown document
     let allUrls = [];
+    let starredUrls = [];
     fmhyResourceMap = {};
     for (let index = 0; index < responses.length; index++) {
       const response = responses[index];
@@ -1098,6 +1099,7 @@ async function fetchSafeSites() {
         const markdown = await response.text();
         const urls = extractUrlsFromMarkdown(markdown);
         allUrls = allUrls.concat(urls);
+        starredUrls.push(...extractStarredUrlsFromMarkdown(markdown));
         const guideName = new URL(safeListURLs[index]).pathname
           .split("/")
           .pop()
@@ -1117,62 +1119,28 @@ async function fetchSafeSites() {
     safeSites = [
       ...new Set(allUrls.map((url) => normalizeResourceUrl(url.trim()))),
     ].filter((url) => url !== null);
+    starredSites = [
+      ...new Set(starredUrls.map((url) => normalizeResourceUrl(url))),
+    ].filter((url) => url !== null);
     safeSiteIndex = buildResourceIndex(safeSites);
+    starredSiteIndex = buildResourceIndex(starredSites);
     checkedTabUrls.clear();
 
     // Store safe sites for content script use
     await browserAPI.storage.local.set({
       safeSiteCount: safeSites.length,
       safeSiteList: safeSites,
+      starredSiteCount: starredSites.length,
+      starredSites,
       fmhyResourceMap,
       resourceIdentityVersion,
     });
 
-    console.log("Stored safe site count:", safeSites.length);
-  } catch (error) {
-    console.error("Error fetching safe sites:", error);
-  }
-}
-
-async function fetchStarredSites() {
-  console.log("Fetching starred sites from Markdown guides...");
-
-  try {
-    // Fetch all the Markdown files in safeListURLs
-    const fetchPromises = safeListURLs.map((url) => fetch(url));
-    const responses = await Promise.all(fetchPromises);
-
-    // From each markdown, pull out only those lines containing a star (⭐)
-    let starredUrls = [];
-    for (const response of responses) {
-      if (!response.ok) {
-        console.warn(`Failed to fetch ${response.url}`);
-        continue;
-      }
-      const markdown = await response.text();
-      starredUrls.push(...extractStarredUrlsFromMarkdown(markdown));
-    }
-
-    // Normalize, dedupe and store
-    starredSites = Array.from(
-      new Set(
-        starredUrls
-          .map((url) => normalizeResourceUrl(url))
-          .filter((url) => url !== null)
-      )
+    console.log(
+      `Stored ${safeSites.length} safe and ${starredSites.length} starred resources`
     );
-    starredSiteIndex = buildResourceIndex(starredSites);
-    checkedTabUrls.clear();
-
-    await browserAPI.storage.local.set({
-      starredSites,
-      starredSiteCount: starredSites.length,
-      resourceIdentityVersion,
-    });
-
-    console.log(`Stored ${starredSites.length} starred sites`);
   } catch (error) {
-    console.error("Error fetching starred sites:", error);
+    console.error("Error fetching FMHY resource guides:", error);
   }
 }
 
@@ -1758,9 +1726,7 @@ async function initializeExtension() {
     await initializeSettings();
     await loadUserDomains();
     if (await shouldUpdate()) {
-      await fetchFilterLists();
-      await fetchSafeSites();
-      await fetchStarredSites();
+      await Promise.all([fetchFilterLists(), fetchResourceLists()]);
     } else {
       // Load data from storage
       try {
@@ -1821,6 +1787,8 @@ async function initializeExtension() {
           }
         }
 
+        let needsResourceRefresh = !hasCurrentResourceIdentity;
+
         // Load starred sites from storage
         if (
           hasCurrentResourceIdentity &&
@@ -1833,8 +1801,7 @@ async function initializeExtension() {
             `Loaded ${starredSites.length} starred sites from storage`
           );
         } else {
-          // If no starred sites in storage, fetch them now
-          await fetchStarredSites();
+          needsResourceRefresh = true;
         }
 
         fmhyResourceMap = storedData.fmhyResourceMap || {};
@@ -1852,11 +1819,14 @@ async function initializeExtension() {
             (fmhyUrl) => fmhyUrl.includes("#-")
           );
           if (Object.keys(fmhyResourceMap).length === 0 || hasLegacyAnchors) {
-            await fetchSafeSites();
+            needsResourceRefresh = true;
           }
         } else {
-          // If no safe sites in storage, fetch them now
-          await fetchSafeSites();
+          needsResourceRefresh = true;
+        }
+
+        if (needsResourceRefresh) {
+          await fetchResourceLists();
         }
       } catch (error) {
         console.error("Error loading from storage:", error);
@@ -1885,8 +1855,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Force update triggered manually");
     Promise.all([
       fetchFilterLists(),
-      fetchSafeSites(),
-      fetchStarredSites()
+      fetchResourceLists()
     ]).then(() => {
       sendResponse({ status: "updated" });
     }).catch((error) => {

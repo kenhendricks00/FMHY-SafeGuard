@@ -40,7 +40,9 @@ const firefoxManifest = fs.readFileSync(
 );
 
 function loadFunction(source, name) {
-  const start = source.indexOf(`function ${name}(`);
+  const asyncStart = source.indexOf(`async function ${name}(`);
+  const start =
+    asyncStart !== -1 ? asyncStart : source.indexOf(`function ${name}(`);
   assert.notEqual(start, -1, `${name} should be defined`);
 
   const bodyStart = source.indexOf("{", start);
@@ -569,6 +571,57 @@ test("shared-host matching narrows candidates by the first path segment", () => 
     comparisonCount <= 2,
     `expected at most 2 candidate comparisons, received ${comparisonCount}`,
   );
+});
+
+test("FMHY resource guides are fetched only once per refresh", async () => {
+  const fetchResourceLists = loadFunctionWithDependencies(
+    backgroundScript,
+    "fetchResourceLists",
+    {
+      safeListURLs: [
+        "https://example.com/first.md",
+        "https://example.com/second.md",
+      ],
+      extractUrlsFromMarkdown: () => [],
+      extractFmhyResourceMap: () => ({}),
+      extractStarredUrlsFromMarkdown: () => [],
+      normalizeResourceUrl: (url) => url,
+      buildResourceIndex: () => new Map(),
+      browserAPI: {
+        storage: {
+          local: {
+            set: async () => {},
+          },
+        },
+      },
+      resourceIdentityVersion: 2,
+      safeSites: [],
+      starredSites: [],
+      safeSiteIndex: new Map(),
+      starredSiteIndex: new Map(),
+      fmhyResourceMap: {},
+      checkedTabUrls: new Map(),
+      console: {
+        log: () => {},
+        warn: () => {},
+        error: () => {},
+      },
+      fetch: async () => {
+        fetchResourceLists.requestCount += 1;
+        return {
+          ok: true,
+          text: async () => "# Guide",
+        };
+      },
+    },
+  );
+  fetchResourceLists.requestCount = 0;
+
+  await fetchResourceLists();
+
+  assert.equal(fetchResourceLists.requestCount, 2);
+  assert.doesNotMatch(backgroundScript, /async function fetchSafeSites\(/);
+  assert.doesNotMatch(backgroundScript, /async function fetchStarredSites\(/);
 });
 
 test("the same tab URL is only checked once per navigation", () => {
