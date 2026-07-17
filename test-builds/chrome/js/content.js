@@ -190,26 +190,37 @@ async function loadSettings() {
 // Load domain lists from extension storage
 async function loadDomainLists() {
   try {
-    const { unsafeSites, safeSiteList, unsafeReasons: storedReasons } = await browserAPI.storage.local.get([
-      "unsafeSites",
-      "safeSiteList",
+    const compactData = await browserAPI.storage.local.get([
+      "unsafeDomainList",
+      "safeDomainList",
       "unsafeReasons",
     ]);
+    let unsafeDomainList = Array.isArray(compactData.unsafeDomainList)
+      ? compactData.unsafeDomainList
+      : null;
+    let safeDomainList = Array.isArray(compactData.safeDomainList)
+      ? compactData.safeDomainList
+      : null;
 
-    if (unsafeSites && Array.isArray(unsafeSites)) {
-      unsafeDomains = new Set(
-        unsafeSites.map((site) => normalizeDomain(new URL(site).hostname))
-      );
+    // Preserve compatibility with data cached by older extension versions.
+    const fallbackKeys = [];
+    if (!unsafeDomainList) fallbackKeys.push("unsafeSites");
+    if (!safeDomainList) fallbackKeys.push("safeSiteList");
+    if (fallbackKeys.length > 0) {
+      const fallbackData = await browserAPI.storage.local.get(fallbackKeys);
+      if (!unsafeDomainList) {
+        unsafeDomainList = extractDomainsFromUrls(fallbackData.unsafeSites);
+      }
+      if (!safeDomainList) {
+        safeDomainList = extractDomainsFromUrls(fallbackData.safeSiteList);
+      }
     }
 
-    if (safeSiteList && Array.isArray(safeSiteList)) {
-      safeDomains = new Set(
-        safeSiteList.map((site) => normalizeDomain(new URL(site).hostname))
-      );
-    }
+    unsafeDomains = new Set(unsafeDomainList || []);
+    safeDomains = new Set(safeDomainList || []);
 
-    if (storedReasons) {
-      unsafeReasons = storedReasons;
+    if (compactData.unsafeReasons) {
+      unsafeReasons = compactData.unsafeReasons;
     }
 
     // Apply user overrides
@@ -221,6 +232,20 @@ async function loadDomainLists() {
   } catch (error) {
     console.error("[FMHY SafeGuard] Error loading domain lists:", error);
   }
+}
+
+function extractDomainsFromUrls(urls) {
+  const domains = new Set();
+
+  for (const site of urls || []) {
+    try {
+      domains.add(normalizeDomain(new URL(site).hostname));
+    } catch (error) {
+      // Ignore malformed entries from legacy caches.
+    }
+  }
+
+  return [...domains];
 }
 
 // Apply user trusted/untrusted overrides

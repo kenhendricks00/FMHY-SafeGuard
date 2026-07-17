@@ -65,7 +65,6 @@ const safeListURLs = [
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/linux-macos.md",
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/misc.md",
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/non-english.md",
-  "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/nsfwpiracy.md",
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/reading.md",
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/social-media-tools.md",
   "https://raw.githubusercontent.com/fmhy/edit/refs/heads/main/docs/storage.md",
@@ -124,7 +123,6 @@ let unsafeHostnamesRegex = null; // Domain-only regex for unsafe sites
 let potentiallyUnsafeSitesRegex = null;
 let potentiallyUnsafeHostnamesRegex = null; // Domain-only regex for potentially unsafe sites
 let fmhySitesRegex = null;
-let fmhyHostnamesRegex = null; // Domain-only regex for FMHY sites
 let safeSites = [];
 let starredSites = [];
 let safeSiteIndex = new Map();
@@ -990,6 +988,24 @@ function extractHostnamesFromUrls(urls) {
   }).filter((hostname) => hostname !== null);
 }
 
+function extractUniqueHostnamesFromUrls(urls) {
+  const hostnames = new Set();
+
+  for (const url of urls) {
+    try {
+      const source = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      const hostname = new URL(source).hostname
+        .replace(/^www\./, "")
+        .toLowerCase();
+      if (hostname) hostnames.add(hostname);
+    } catch (error) {
+      // Ignore malformed entries; the URL lists are validated separately.
+    }
+  }
+
+  return [...hostnames];
+}
+
 // Function to check if a URL is a search engine
 function isSearchEngine(url) {
   try {
@@ -1044,9 +1060,6 @@ async function fetchFilterLists() {
       const fmhyText = await fmhyResponse.text();
       fmhySites = extractUrlsFromFilterList(fmhyText);
       fmhySitesRegex = generateRegexFromList(fmhySites);
-      // Also generate hostname-only regex for domain-level matching
-      const fmhyHostnames = extractHostnamesFromUrls(fmhySites);
-      fmhyHostnamesRegex = generateRegexFromList(fmhyHostnames);
     }
 
     // Fetch unsafe site reasons
@@ -1065,6 +1078,7 @@ async function fetchFilterLists() {
 
     await browserAPI.storage.local.set({
       unsafeSites,
+      unsafeDomainList: extractUniqueHostnamesFromUrls(unsafeSites),
       potentiallyUnsafeSites,
       fmhySites,
       unsafeReasons,
@@ -1130,6 +1144,7 @@ async function fetchResourceLists() {
     await browserAPI.storage.local.set({
       safeSiteCount: safeSites.length,
       safeSiteList: safeSites,
+      safeDomainList: extractUniqueHostnamesFromUrls(safeSites),
       starredSiteCount: starredSites.length,
       starredSites,
       fmhyResourceMap,
@@ -1263,10 +1278,8 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
 // Update Schedule Management
 async function shouldUpdate() {
   try {
-    const { lastUpdated } = await browserAPI.storage.local.get("lastUpdated");
-    const { updateFrequency = "daily" } = await browserAPI.storage.local.get({
-      updateFrequency: "daily",
-    });
+    const { lastUpdated, updateFrequency = "daily" } =
+      await browserAPI.storage.local.get(["lastUpdated", "updateFrequency"]);
 
     if (!lastUpdated) return true;
 
@@ -1677,13 +1690,20 @@ async function initializeSettings() {
     Object.keys(defaultSettings)
   );
 
-  // Merge with defaults for any missing settings
-  const mergedSettings = { ...defaultSettings, ...existingSettings };
+  const missingSettings = Object.fromEntries(
+    Object.entries(defaultSettings).filter(
+      ([key]) => existingSettings[key] === undefined
+    )
+  );
 
-  // Save the merged settings
-  await browserAPI.storage.local.set(mergedSettings);
+  if (Object.keys(missingSettings).length > 0) {
+    await browserAPI.storage.local.set(missingSettings);
+  }
 
-  console.log("Settings initialized:", mergedSettings);
+  console.log("Settings initialized:", {
+    ...defaultSettings,
+    ...existingSettings,
+  });
 }
 
 // Load user-defined trusted/untrusted domains from storage
@@ -1732,22 +1752,29 @@ async function initializeExtension() {
       try {
         const storedData = await browserAPI.storage.local.get([
           "unsafeSites",
+          "unsafeDomainList",
           "potentiallyUnsafeSites",
           "fmhySites",
           "starredSites",
           "safeSiteList",
+          "safeDomainList",
           "fmhyResourceMap",
           "unsafeReasons",
           "resourceIdentityVersion",
         ]);
         const hasCurrentResourceIdentity =
           storedData.resourceIdentityVersion === resourceIdentityVersion;
+        const compactDomainUpdates = {};
 
         if (storedData.unsafeSites && storedData.unsafeSites.length > 0) {
           unsafeSitesRegex = generateRegexFromList(storedData.unsafeSites);
           // Also generate hostname-only regex for domain-level matching
           const unsafeHostnames = extractHostnamesFromUrls(storedData.unsafeSites);
           unsafeHostnamesRegex = generateRegexFromList(unsafeHostnames);
+          if (!Array.isArray(storedData.unsafeDomainList)) {
+            compactDomainUpdates.unsafeDomainList =
+              extractUniqueHostnamesFromUrls(storedData.unsafeSites);
+          }
         }
 
         if (
@@ -1764,9 +1791,6 @@ async function initializeExtension() {
 
         if (storedData.fmhySites && storedData.fmhySites.length > 0) {
           fmhySitesRegex = generateRegexFromList(storedData.fmhySites);
-          // Also generate hostname-only regex for domain-level matching
-          const fmhyHostnames = extractHostnamesFromUrls(storedData.fmhySites);
-          fmhyHostnamesRegex = generateRegexFromList(fmhyHostnames);
         }
 
         if (storedData.unsafeReasons && Object.keys(storedData.unsafeReasons).length > 0) {
@@ -1814,6 +1838,10 @@ async function initializeExtension() {
         ) {
           safeSites = storedData.safeSiteList;
           safeSiteIndex = buildResourceIndex(safeSites);
+          if (!Array.isArray(storedData.safeDomainList)) {
+            compactDomainUpdates.safeDomainList =
+              extractUniqueHostnamesFromUrls(safeSites);
+          }
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
           const hasLegacyAnchors = Object.values(fmhyResourceMap).some(
             (fmhyUrl) => fmhyUrl.includes("#-")
@@ -1823,6 +1851,10 @@ async function initializeExtension() {
           }
         } else {
           needsResourceRefresh = true;
+        }
+
+        if (Object.keys(compactDomainUpdates).length > 0) {
+          await browserAPI.storage.local.set(compactDomainUpdates);
         }
 
         if (needsResourceRefresh) {

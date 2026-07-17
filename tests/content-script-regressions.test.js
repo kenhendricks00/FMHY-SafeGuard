@@ -622,6 +622,120 @@ test("FMHY resource guides are fetched only once per refresh", async () => {
   assert.equal(fetchResourceLists.requestCount, 2);
   assert.doesNotMatch(backgroundScript, /async function fetchSafeSites\(/);
   assert.doesNotMatch(backgroundScript, /async function fetchStarredSites\(/);
+  assert.doesNotMatch(backgroundScript, /docs\/nsfwpiracy\.md/);
+});
+
+test("compact domain indexes deduplicate normalized hostnames", () => {
+  const extractUniqueHostnamesFromUrls = loadFunction(
+    backgroundScript,
+    "extractUniqueHostnamesFromUrls",
+  );
+
+  assert.deepEqual(
+    extractUniqueHostnamesFromUrls([
+      "https://www.example.com/path",
+      "https://example.com/other",
+      "https://github.com/fmhy/FMHY-SafeGuard",
+      "not a valid URL",
+    ]),
+    ["example.com", "github.com"],
+  );
+});
+
+test("content scripts prefer compact domain indexes over full resource lists", async () => {
+  const requestedKeys = [];
+  const loadDomainLists = loadFunctionWithDependencies(
+    contentScript,
+    "loadDomainLists",
+    {
+      browserAPI: {
+        storage: {
+          local: {
+            get: async (keys) => {
+              requestedKeys.push(keys);
+              return {
+                unsafeDomainList: ["unsafe.example"],
+                safeDomainList: ["safe.example"],
+                unsafeReasons: {},
+              };
+            },
+          },
+        },
+      },
+      unsafeDomains: new Set(),
+      safeDomains: new Set(),
+      unsafeReasons: {},
+      normalizeDomain: (hostname) => hostname.replace(/^www\./, "").toLowerCase(),
+      applyUserOverrides: () => {},
+      console: {
+        log: () => {},
+        error: () => {},
+      },
+    },
+  );
+
+  await loadDomainLists();
+
+  assert.deepEqual(requestedKeys, [
+    ["unsafeDomainList", "safeDomainList", "unsafeReasons"],
+  ]);
+});
+
+test("settings initialization writes only missing defaults", async () => {
+  const writes = [];
+  const initializeSettings = loadFunctionWithDependencies(
+    backgroundScript,
+    "initializeSettings",
+    {
+      browserAPI: {
+        storage: {
+          local: {
+            get: async () => ({
+              theme: "dark",
+              showWarning: false,
+            }),
+            set: async (settings) => writes.push(settings),
+          },
+        },
+      },
+      console: { log() {} },
+    },
+  );
+
+  await initializeSettings();
+
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].theme, undefined);
+  assert.equal(writes[0].showWarning, undefined);
+  assert.equal(writes[0].updateFrequency, "daily");
+  assert.equal(writes[0].highlightTrusted, true);
+});
+
+test("update checks read their schedule in one storage operation", async () => {
+  const storageGets = [];
+  const shouldUpdate = loadFunctionWithDependencies(
+    backgroundScript,
+    "shouldUpdate",
+    {
+      browserAPI: {
+        storage: {
+          local: {
+            get: async (keys) => {
+              storageGets.push(keys);
+              return {
+                lastUpdated: new Date().toISOString(),
+                updateFrequency: "daily",
+              };
+            },
+          },
+        },
+      },
+      console: { error() {} },
+    },
+  );
+
+  assert.equal(await shouldUpdate(), false);
+  assert.deepEqual(storageGets, [["lastUpdated", "updateFrequency"]]);
 });
 
 test("the same tab URL is only checked once per navigation", () => {
