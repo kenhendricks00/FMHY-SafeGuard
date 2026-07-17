@@ -127,12 +127,16 @@ let fmhySitesRegex = null;
 let fmhyHostnamesRegex = null; // Domain-only regex for FMHY sites
 let safeSites = [];
 let starredSites = [];
+let safeSiteIndex = new Map();
+let starredSiteIndex = new Map();
 let fmhyResourceMap = {};
 let unsafeReasons = {}; // Object to store reasons for unsafe sites
 const approvedUrls = new Map(); // Map to store approved URLs per tab
+const checkedTabUrls = new Map(); // Last status-checked URL per tab
 const notesCache = new Map(); // Cache for fetched notes
 let userTrustedDomains = new Set(); // User-defined trusted domains
 let userUntrustedDomains = new Set(); // User-defined untrusted domains
+let initializationPromise = null;
 
 // Base64 Starred Links (from rentry.co/FMHYB64) - stored encoded, decoded at runtime
 const base64StarredLinksEncoded = [
@@ -302,6 +306,8 @@ const base64SafeLinksEncoded = [
   "aHR0cHM6Ly9naXRodWIuY29tL0Nvc21pY1NjYWxlL1BTQkJOLURlZmluaXRpdmUtRW5nbGlzaC1QYXRjaA==",
 ];
 const base64DecodedLinks = base64SafeLinksEncoded.map(e => atob(e));
+const base64StarredSiteIndex = buildResourceIndex(base64StarredLinks);
+const base64SafeSiteIndex = buildResourceIndex(base64DecodedLinks);
 
 // List of search engines to check against
 const searchEngines = [
@@ -839,6 +845,53 @@ function urlMatchesListedResource(currentUrl, listedUrl) {
   return true;
 }
 
+function buildResourceIndex(urls) {
+  const index = new Map();
+
+  for (const url of urls) {
+    const normalizedUrl = normalizeResourceUrl(url);
+    if (!normalizedUrl) continue;
+
+    const hostname = new URL(normalizedUrl).hostname
+      .replace(/^www\./, "")
+      .toLowerCase();
+    const resources = index.get(hostname) || [];
+    resources.push(normalizedUrl);
+    index.set(hostname, resources);
+  }
+
+  return index;
+}
+
+function findMatchingListedResource(currentUrl, resourceIndex) {
+  const normalizedUrl = normalizeResourceUrl(currentUrl);
+  if (!normalizedUrl) return undefined;
+
+  const hostname = new URL(normalizedUrl).hostname
+    .replace(/^www\./, "")
+    .toLowerCase();
+  const candidateHosts = [hostname];
+
+  // Normal sites can inherit a resource classification from a listed parent
+  // domain. Shared platforms must remain scoped to their exact hostname.
+  if (!isSharedResourceHost(hostname)) {
+    const labels = hostname.split(".");
+    for (let index = 1; index < labels.length - 1; index += 1) {
+      candidateHosts.push(labels.slice(index).join("."));
+    }
+  }
+
+  for (const candidateHost of candidateHosts) {
+    const resources = resourceIndex.get(candidateHost) || [];
+    const match = resources.find((listedUrl) =>
+      urlMatchesListedResource(normalizedUrl, listedUrl)
+    );
+    if (match) return match;
+  }
+
+  return undefined;
+}
+
 function extractRootUrl(url) {
   if (!url) {
     console.warn("Received null or undefined URL for root extraction.");
@@ -979,6 +1032,7 @@ async function fetchFilterLists() {
       fmhyFilterCount: fmhySites.length,
       lastUpdated: new Date().toISOString(),
     });
+    checkedTabUrls.clear();
 
     console.log("Filter lists fetched and stored successfully.");
 
@@ -1022,6 +1076,8 @@ async function fetchSafeSites() {
     safeSites = [
       ...new Set(allUrls.map((url) => normalizeResourceUrl(url.trim()))),
     ].filter((url) => url !== null);
+    safeSiteIndex = buildResourceIndex(safeSites);
+    checkedTabUrls.clear();
 
     // Store safe sites for content script use
     await browserAPI.storage.local.set({
@@ -1064,6 +1120,8 @@ async function fetchStarredSites() {
           .filter((url) => url !== null)
       )
     );
+    starredSiteIndex = buildResourceIndex(starredSites);
+    checkedTabUrls.clear();
 
     await browserAPI.storage.local.set({
       starredSites,
@@ -1131,6 +1189,8 @@ async function notifySettingsPage() {
 
 // Site Status Checking
 async function checkSiteAndUpdatePageAction(tabId, url) {
+  if (initializationPromise) await initializationPromise;
+
   console.log(
     `checkSiteAndUpdatePageAction: Checking status for ${url} on tab ${tabId}`
   );
@@ -1163,36 +1223,14 @@ async function checkSiteAndUpdatePageAction(tabId, url) {
   // First check the full URL
   status = getStatusFromLists(resourceUrl);
 
-  // If not found, try with trailing slash
-  if (
-    status === "no_data" &&
-    !requiresResourcePath &&
-    !normalizedUrl.endsWith("/")
-  ) {
-    status = getStatusFromLists(normalizedUrl + "/");
-    if (status !== "no_data") matchedUrl = normalizedUrl + "/";
-  }
-
-  // If not found, try without trailing slash
-  if (
-    status === "no_data" &&
-    !requiresResourcePath &&
-    normalizedUrl.endsWith("/")
-  ) {
-    status = getStatusFromLists(normalizedUrl.slice(0, -1));
-    if (status !== "no_data") matchedUrl = normalizedUrl.slice(0, -1);
-  }
-
   // If still no match, check the root URL
-  if (status === "no_data" && !requiresResourcePath) {
+  if (
+    status === "no_data" &&
+    !requiresResourcePath &&
+    rootUrl !== resourceUrl
+  ) {
     status = getStatusFromLists(rootUrl);
     if (status !== "no_data") matchedUrl = rootUrl;
-
-    // Try root URL with trailing slash
-    if (status === "no_data" && !rootUrl.endsWith("/")) {
-      status = getStatusFromLists(rootUrl + "/");
-      if (status !== "no_data") matchedUrl = rootUrl + "/";
-    }
   }
 
   // A path-specific reason can classify a resource even when it is absent from
@@ -1301,6 +1339,8 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getSiteStatus") {
     (async () => {
       try {
+        if (initializationPromise) await initializationPromise;
+
         // Get the URL from the message
         const url = message.url;
         if (!url) {
@@ -1344,17 +1384,25 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else if (fmhySitesRegex?.test(normalizedUrl)) {
           status = "fmhy";
           matchedUrl = normalizedUrl;
-        } else if ((matchedUrl = starredSites.find((listedUrl) =>
-          urlMatchesListedResource(resourceUrl, listedUrl)))) {
+        } else if ((matchedUrl = findMatchingListedResource(
+          resourceUrl,
+          starredSiteIndex,
+        ))) {
           status = "starred";
-        } else if ((matchedUrl = safeSites.find((listedUrl) =>
-          urlMatchesListedResource(resourceUrl, listedUrl)))) {
+        } else if ((matchedUrl = findMatchingListedResource(
+          resourceUrl,
+          safeSiteIndex,
+        ))) {
           status = "safe";
-        } else if ((matchedUrl = base64StarredLinks.find((listedUrl) =>
-          urlMatchesListedResource(resourceUrl, listedUrl)))) {
+        } else if ((matchedUrl = findMatchingListedResource(
+          resourceUrl,
+          base64StarredSiteIndex,
+        ))) {
           status = "starred";
-        } else if ((matchedUrl = base64DecodedLinks.find((listedUrl) =>
-          urlMatchesListedResource(resourceUrl, listedUrl)))) {
+        } else if ((matchedUrl = findMatchingListedResource(
+          resourceUrl,
+          base64SafeSiteIndex,
+        ))) {
           status = "safe";
         }
 
@@ -1479,10 +1527,10 @@ function getStatusFromLists(url) {
     if (unsafeSitesRegex?.test(url)) return "unsafe";
     if (potentiallyUnsafeSitesRegex?.test(url)) return "potentially_unsafe";
     if (fmhySitesRegex?.test(url)) return "fmhy";
-    if (starredSites.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "starred";
-    if (safeSites.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "safe";
-    if (base64StarredLinks.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "starred";
-    if (base64DecodedLinks.some((listedUrl) => urlMatchesListedResource(url, listedUrl))) return "safe";
+    if (findMatchingListedResource(url, starredSiteIndex)) return "starred";
+    if (findMatchingListedResource(url, safeSiteIndex)) return "safe";
+    if (findMatchingListedResource(url, base64StarredSiteIndex)) return "starred";
+    if (findMatchingListedResource(url, base64SafeSiteIndex)) return "safe";
 
     if (requiresResourcePath) return "no_data";
 
@@ -1553,14 +1601,26 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Don't return anything for messages we don't handle - let other listeners process them
 });
 
+function shouldCheckTabUrl(tabId, url) {
+  const normalizedUrl = normalizeResourceUrl(url) || url;
+  if (checkedTabUrls.get(tabId) === normalizedUrl) return false;
+
+  checkedTabUrls.set(tabId, normalizedUrl);
+  return true;
+}
+
 // Listen for tab updates
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url) {
+  if (changeInfo.url && shouldCheckTabUrl(tabId, changeInfo.url)) {
     await checkSiteAndUpdatePageAction(tabId, changeInfo.url);
     return;
   }
 
-  if (changeInfo.status === "complete" && tab.url) {
+  if (
+    changeInfo.status === "complete" &&
+    tab.url &&
+    shouldCheckTabUrl(tabId, tab.url)
+  ) {
     // Always check the site status
     await checkSiteAndUpdatePageAction(tabId, tab.url);
   }
@@ -1568,8 +1628,8 @@ browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 browserAPI.tabs.onActivated.addListener(async (activeInfo) => {
   const tab = await browserAPI.tabs.get(activeInfo.tabId);
-  if (tab.url) {
-    checkSiteAndUpdatePageAction(tab.id, tab.url);
+  if (tab.url && shouldCheckTabUrl(tab.id, tab.url)) {
+    await checkSiteAndUpdatePageAction(tab.id, tab.url);
   }
 });
 
@@ -1584,6 +1644,7 @@ browserAPI.alarms.onAlarm.addListener(async (alarm) => {
 
 browserAPI.tabs.onRemoved.addListener((tabId) => {
   approvedUrls.delete(tabId);
+  checkedTabUrls.delete(tabId);
   browserAPI.storage.local.remove(`proceedTab_${tabId}`);
 });
 
@@ -1640,6 +1701,7 @@ async function loadUserDomains() {
 browserAPI.storage.onChanged.addListener((changes, area) => {
   if (area === "local") {
     if (changes.userTrustedDomains || changes.userUntrustedDomains) {
+      checkedTabUrls.clear();
       loadUserDomains().then(() => {
         console.log("User domains reloaded after settings change");
       });
@@ -1725,6 +1787,7 @@ async function initializeExtension() {
           storedData.starredSites.length > 0
         ) {
           starredSites = storedData.starredSites;
+          starredSiteIndex = buildResourceIndex(starredSites);
           console.log(
             `Loaded ${starredSites.length} starred sites from storage`
           );
@@ -1742,6 +1805,7 @@ async function initializeExtension() {
           storedData.safeSiteList.length > 0
         ) {
           safeSites = storedData.safeSiteList;
+          safeSiteIndex = buildResourceIndex(safeSites);
           console.log(`Loaded ${safeSites.length} safe sites from storage`);
           const hasLegacyAnchors = Object.values(fmhyResourceMap).some(
             (fmhyUrl) => fmhyUrl.includes("#-")
@@ -1836,4 +1900,4 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-initializeExtension();
+initializationPromise = initializeExtension();
