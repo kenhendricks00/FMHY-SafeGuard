@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.4.0 (07/17/2026)
 
 #### **Performance**
 - Indexed shared-host resources by hostname and first path segment, avoiding full candidate-list scans on sites such as GitHub and Rentry.
