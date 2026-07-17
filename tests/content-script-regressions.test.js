@@ -169,7 +169,7 @@ test("Markdown autolinks are extracted without angle brackets", () => {
 test("unsafe navigation is checked as soon as the tab URL changes", () => {
   assert.match(
     backgroundScript,
-    /tabs\.onUpdated\.addListener\(async \(tabId, changeInfo, tab\) => \{\s*if \(changeInfo\.url\) \{\s*await checkSiteAndUpdatePageAction\(tabId, changeInfo\.url\);\s*return;/,
+    /tabs\.onUpdated\.addListener\(async \(tabId, changeInfo, tab\) => \{\s*if \(changeInfo\.url && shouldCheckTabUrl\(tabId, changeInfo\.url\)\) \{\s*await checkSiteAndUpdatePageAction\(tabId, changeInfo\.url\);\s*return;/,
   );
 });
 
@@ -460,6 +460,90 @@ test("shared hosts require the same path-bound resource", () => {
   );
 });
 
+test("resource matching only scans candidates for the current hostname", () => {
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
+  const buildResourceIndex = loadFunctionWithDependencies(
+    backgroundScript,
+    "buildResourceIndex",
+    { normalizeResourceUrl },
+  );
+
+  let comparisonCount = 0;
+  const findMatchingListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "findMatchingListedResource",
+    {
+      normalizeResourceUrl,
+      isSharedResourceHost: () => false,
+      urlMatchesListedResource: (currentUrl, listedUrl) => {
+        comparisonCount += 1;
+        return currentUrl === listedUrl;
+      },
+    },
+  );
+  const resources = Array.from(
+    { length: 25000 },
+    (_, index) => `https://resource-${index}.example/item`,
+  );
+  resources.push("https://target.example/item");
+  const resourceIndex = buildResourceIndex(resources);
+
+  assert.equal(
+    findMatchingListedResource(
+      "https://unknown.example/item",
+      resourceIndex,
+    ),
+    undefined,
+  );
+  assert.equal(comparisonCount, 0);
+
+  assert.equal(
+    findMatchingListedResource(
+      "https://target.example/item",
+      resourceIndex,
+    ),
+    "https://target.example/item",
+  );
+  assert.equal(comparisonCount, 1);
+});
+
+test("the same tab URL is only checked once per navigation", () => {
+  const shouldCheckTabUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "shouldCheckTabUrl",
+    {
+      normalizeResourceUrl: (url) => url,
+      checkedTabUrls: new Map(),
+    },
+  );
+
+  assert.equal(shouldCheckTabUrl(7, "https://example.com/page"), true);
+  assert.equal(shouldCheckTabUrl(7, "https://example.com/page"), false);
+  assert.equal(shouldCheckTabUrl(7, "https://example.com/next"), true);
+  assert.equal(shouldCheckTabUrl(8, "https://example.com/next"), true);
+});
+
+test("status checks wait for resource-list initialization", () => {
+  assert.match(backgroundScript, /let initializationPromise = null;/);
+  assert.match(
+    backgroundScript,
+    /async function checkSiteAndUpdatePageAction\(tabId, url\) \{\s*if \(initializationPromise\) await initializationPromise;/,
+  );
+  assert.match(
+    backgroundScript,
+    /if \(message\.action === "getSiteStatus"\) \{\s*\(async \(\) => \{\s*try \{\s*if \(initializationPromise\) await initializationPromise;/,
+  );
+  assert.match(
+    backgroundScript,
+    /initializationPromise = initializeExtension\(\);/,
+  );
+});
+
 test("cross-domain redirects do not inherit a source site's status", () => {
   assert.doesNotMatch(chromiumManifest, /"webNavigation"/);
   assert.doesNotMatch(firefoxManifest, /"webNavigation"|"webRequest"/);
@@ -532,6 +616,30 @@ test("status matching isolates shared resources and recognizes matching subdomai
     "urlMatchesListedResource",
     { normalizeResourceUrl, isSharedResourceHost },
   );
+  const buildResourceIndex = loadFunctionWithDependencies(
+    backgroundScript,
+    "buildResourceIndex",
+    { normalizeResourceUrl },
+  );
+  const findMatchingListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "findMatchingListedResource",
+    {
+      normalizeResourceUrl,
+      isSharedResourceHost,
+      urlMatchesListedResource,
+    },
+  );
+  const starredSiteIndex = buildResourceIndex([
+    "https://github.com/fmhy/FMHY-SafeGuard",
+    "https://gist.github.com/",
+    "https://docs.gitlab.com/user/snippets/",
+    "https://ente.com/auth",
+    "https://mullvad.net",
+  ]);
+  const safeSiteIndex = buildResourceIndex([
+    "https://github.com/fmhy/FMHYFilterlist",
+  ]);
   const getStatusFromLists = loadFunctionWithDependencies(
     backgroundScript,
     "getStatusFromLists",
@@ -539,20 +647,14 @@ test("status matching isolates shared resources and recognizes matching subdomai
       userTrustedDomains: new Set(),
       userUntrustedDomains: new Set(),
       isSharedResourceHost,
-      urlMatchesListedResource,
+      findMatchingListedResource,
       unsafeSitesRegex: null,
       potentiallyUnsafeSitesRegex: null,
       fmhySitesRegex: null,
-      starredSites: [
-        "https://github.com/fmhy/FMHY-SafeGuard",
-        "https://gist.github.com/",
-        "https://docs.gitlab.com/user/snippets/",
-        "https://ente.com/auth",
-        "https://mullvad.net",
-      ],
-      safeSites: ["https://github.com/fmhy/FMHYFilterlist"],
-      base64StarredLinks: [],
-      base64DecodedLinks: [],
+      starredSiteIndex,
+      safeSiteIndex,
+      base64StarredSiteIndex: new Map(),
+      base64SafeSiteIndex: new Map(),
       unsafeHostnamesRegex: null,
       potentiallyUnsafeHostnamesRegex: null,
     },
@@ -663,7 +765,7 @@ test("live resource data preserves query and fragment identities", () => {
   );
   assert.match(
     backgroundScript,
-    /urlMatchesListedResource\(resourceUrl, listedUrl\)/,
+    /findMatchingListedResource\(\s*resourceUrl,\s*(?:starred|safe)SiteIndex,/,
   );
   assert.match(
     backgroundScript,
@@ -678,7 +780,7 @@ test("the toolbar does not inherit root status on shared hosts", () => {
   );
   assert.match(
     backgroundScript,
-    /if \(status === "no_data" && !requiresResourcePath\) \{\s*status = getStatusFromLists\(rootUrl\);/,
+    /status === "no_data" &&\s*!requiresResourcePath &&\s*rootUrl !== resourceUrl\s*\) \{\s*status = getStatusFromLists\(rootUrl\);/,
   );
 });
 
