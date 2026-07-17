@@ -751,16 +751,26 @@ function normalizeUrl(url) {
 }
 
 function normalizeResourceUrl(url) {
-  const normalized = normalizeUrl(url);
-  if (!normalized) return null;
+  if (!url) {
+    console.warn("Received null or undefined resource URL.");
+    return null;
+  }
 
   try {
     const source = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-    const sourceObj = new URL(source);
-    const normalizedObj = new URL(normalized);
-    normalizedObj.search = sourceObj.search;
-    normalizedObj.hash = sourceObj.hash;
-    return normalizedObj.href;
+    const urlObj = new URL(source);
+
+    if (urlObj.hostname.startsWith("www.")) {
+      urlObj.hostname = urlObj.hostname.substring(4);
+    }
+
+    const normalizedPath = urlObj.pathname.replace(/\/+$/, "");
+    urlObj.pathname = normalizedPath || "/";
+
+    const normalized = urlObj.href;
+    return urlObj.search || urlObj.hash
+      ? normalized
+      : normalized.replace(/\/+$/, "");
   } catch (error) {
     console.warn(`Invalid resource URL skipped: ${url} - ${error.message}`);
     return null;
@@ -852,11 +862,25 @@ function buildResourceIndex(urls) {
     const normalizedUrl = normalizeResourceUrl(url);
     if (!normalizedUrl) continue;
 
-    const hostname = new URL(normalizedUrl).hostname
-      .replace(/^www\./, "")
-      .toLowerCase();
-    const resources = index.get(hostname) || [];
-    resources.push(normalizedUrl);
+    const parsedUrl = new URL(normalizedUrl);
+    const hostname = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+    const firstPathSegment =
+      parsedUrl.pathname.split("/").filter(Boolean)[0]?.toLowerCase() || "";
+    const resources = index.get(hostname) || {
+      all: [],
+      roots: [],
+      byFirstPathSegment: new Map(),
+    };
+
+    resources.all.push(normalizedUrl);
+    if (!firstPathSegment) {
+      resources.roots.push(normalizedUrl);
+    } else {
+      const pathResources =
+        resources.byFirstPathSegment.get(firstPathSegment) || [];
+      pathResources.push(normalizedUrl);
+      resources.byFirstPathSegment.set(firstPathSegment, pathResources);
+    }
     index.set(hostname, resources);
   }
 
@@ -867,9 +891,10 @@ function findMatchingListedResource(currentUrl, resourceIndex) {
   const normalizedUrl = normalizeResourceUrl(currentUrl);
   if (!normalizedUrl) return undefined;
 
-  const hostname = new URL(normalizedUrl).hostname
-    .replace(/^www\./, "")
-    .toLowerCase();
+  const parsedUrl = new URL(normalizedUrl);
+  const hostname = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+  const firstPathSegment =
+    parsedUrl.pathname.split("/").filter(Boolean)[0]?.toLowerCase() || "";
   const candidateHosts = [hostname];
 
   // Normal sites can inherit a resource classification from a listed parent
@@ -882,7 +907,23 @@ function findMatchingListedResource(currentUrl, resourceIndex) {
   }
 
   for (const candidateHost of candidateHosts) {
-    const resources = resourceIndex.get(candidateHost) || [];
+    const indexedResources = resourceIndex.get(candidateHost);
+    if (!indexedResources) continue;
+
+    let resources;
+    if (Array.isArray(indexedResources)) {
+      resources = indexedResources;
+    } else if (isSharedResourceHost(candidateHost)) {
+      const pathResources = firstPathSegment
+        ? indexedResources.byFirstPathSegment.get(firstPathSegment) || []
+        : [];
+      resources = firstPathSegment
+        ? pathResources.concat(indexedResources.roots)
+        : indexedResources.roots;
+    } else {
+      resources = indexedResources.all;
+    }
+
     const match = resources.find((listedUrl) =>
       urlMatchesListedResource(normalizedUrl, listedUrl)
     );

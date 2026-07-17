@@ -101,20 +101,33 @@ const sharedResourceHosts = new Set([
 ]);
 
 test("processed link tracking can be reset after settings change", () => {
-  assert.match(contentScript, /let processedLinks = new WeakSet\(\);/);
-  assert.match(contentScript, /processedLinks = new WeakSet\(\);/);
+  assert.match(contentScript, /let processedLinks = new WeakMap\(\);/);
+  assert.match(contentScript, /processedLinks = new WeakMap\(\);/);
 });
 
 test("processed links use an extension-owned data attribute", () => {
   assert.match(
     contentScript,
-    /querySelectorAll\("a\[href\]:not\(\[data-fmhy-processed\]\)"\)/,
-  );
-  assert.match(
-    contentScript,
     /link\.setAttribute\("data-fmhy-processed", "true"\);/,
   );
   assert.doesNotMatch(contentScript, /classList\.add\("fmhy-processed"\)/);
+});
+
+test("links are reprocessed only when their destination changes", () => {
+  assert.match(
+    contentScript,
+    /if \(processedLinks\.get\(link\) === link\.href\) return;/,
+  );
+  assert.match(contentScript, /processedLinks\.set\(link, link\.href\);/);
+});
+
+test("Brave highlighting is mutation-driven instead of polling the full page", () => {
+  assert.doesNotMatch(
+    contentScript,
+    /braveSearchBadgeInterval\s*=\s*setInterval\(/,
+  );
+  assert.match(contentScript, /let pageObserver = null;/);
+  assert.match(contentScript, /pageObserver\?\.disconnect\(\);/);
 });
 
 test("warning redirects honor the setting saved by the options page", () => {
@@ -510,6 +523,52 @@ test("resource matching only scans candidates for the current hostname", () => {
     "https://target.example/item",
   );
   assert.equal(comparisonCount, 1);
+});
+
+test("shared-host matching narrows candidates by the first path segment", () => {
+  const normalizeUrl = loadFunction(backgroundScript, "normalizeUrl");
+  const normalizeResourceUrl = loadFunctionWithDependencies(
+    backgroundScript,
+    "normalizeResourceUrl",
+    { normalizeUrl },
+  );
+  const buildResourceIndex = loadFunctionWithDependencies(
+    backgroundScript,
+    "buildResourceIndex",
+    { normalizeResourceUrl },
+  );
+
+  let comparisonCount = 0;
+  const findMatchingListedResource = loadFunctionWithDependencies(
+    backgroundScript,
+    "findMatchingListedResource",
+    {
+      normalizeResourceUrl,
+      isSharedResourceHost: (hostname) => hostname === "github.com",
+      urlMatchesListedResource: (currentUrl, listedUrl) => {
+        comparisonCount += 1;
+        return currentUrl.startsWith(`${listedUrl}/`);
+      },
+    },
+  );
+  const resources = Array.from(
+    { length: 10000 },
+    (_, index) => `https://github.com/owner-${index}/project`,
+  );
+  resources.push("https://github.com/target-owner/project");
+  const resourceIndex = buildResourceIndex(resources);
+
+  assert.equal(
+    findMatchingListedResource(
+      "https://github.com/target-owner/project/issues/1",
+      resourceIndex,
+    ),
+    "https://github.com/target-owner/project",
+  );
+  assert.ok(
+    comparisonCount <= 2,
+    `expected at most 2 candidate comparisons, received ${comparisonCount}`,
+  );
 });
 
 test("the same tab URL is only checked once per navigation", () => {
