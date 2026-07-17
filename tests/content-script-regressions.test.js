@@ -23,6 +23,10 @@ const warningPageScript = fs.readFileSync(
   path.join(__dirname, "..", "src", "pub", "warning-page.js"),
   "utf8",
 );
+const i18nScript = fs.readFileSync(
+  path.join(__dirname, "..", "src", "js", "i18n.js"),
+  "utf8",
+);
 const fmhyHighlightScriptPath = path.join(
   __dirname,
   "..",
@@ -219,6 +223,21 @@ test("unsafe reasons are rendered without interpolating remote text as HTML", ()
   assert.match(popupScript, /link\.textContent = url/);
   assert.match(warningPageScript, /link\.textContent = url/);
   assert.match(contentScript, /document\.createTextNode/);
+});
+
+test("popup and translations render rich text through the shared sanitizer", () => {
+  assert.doesNotMatch(popupScript, /\.innerHTML\s*=/);
+  assert.doesNotMatch(i18nScript, /\.innerHTML\s*=/);
+  assert.match(i18nScript, /function renderSanitizedMarkup\(/);
+  assert.match(i18nScript, /protocol === "https:" \|\| protocol === "http:"/);
+  assert.match(
+    popupScript,
+    /window\.i18n\.renderSanitizedMarkup\(\s*noteContent,/,
+  );
+  assert.match(
+    popupScript,
+    /window\.i18n\.renderSanitizedMarkup\(\s*statusMessage,/,
+  );
 });
 
 test("root-only popup labels omit their trailing slash", () => {
